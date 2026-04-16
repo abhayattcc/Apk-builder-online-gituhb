@@ -298,6 +298,12 @@ jobs:
           zipStorePath=wrapper/dists
           EOF
 
+          # ── gradle.properties (FIX: AndroidX support) ───────────────────────
+          cat > android_project/gradle.properties << 'EOF'
+          android.useAndroidX=true
+          android.enableJetifier=true
+          EOF
+
           # ── app/build.gradle ────────────────────────────────────────────────
           cat > android_project/app/build.gradle << EOF
           plugins {
@@ -573,7 +579,7 @@ jobs:
           </resources>
           EOF
 
-          echo "✅ All Android source files written"
+          echo "✅ All Android source files written (AndroidX enabled via gradle.properties)"
 
       # ─── 9. Generate Keystore ───────────────────────────────────────────────
       - name: 🔑 Generate Keystore
