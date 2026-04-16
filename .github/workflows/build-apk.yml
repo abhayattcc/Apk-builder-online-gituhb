@@ -190,33 +190,41 @@ jobs:
           echo "✅ Web assets prepared:"
           ls -la web_assets/
 
-      # ─── 6. Generate icon ───────────────────────────────────────────────────
-      - name: 🎨 Generate App Icon
+      # ─── 6. Use GitHub uploaded icon.png (512×512) ─────────────────────────
+      - name: 🖼️ Use GitHub Uploaded App Icon (icon.png 512×512)
         run: |
           sudo apt-get install -y imagemagick -q
 
-          THEME_COLOR="${{ steps.vars.outputs.THEME_COLOR }}"
-          APP_INITIAL=$(echo "${{ steps.vars.outputs.APP_NAME }}" | cut -c1 | tr '[:lower:]' '[:upper:]')
+          if [ -f "icon.png" ]; then
+            echo "✅ Found GitHub uploaded icon.png (512×512) – using it for app launcher icons"
+            convert icon.png -resize 48x48!   icon_48.png
+            convert icon.png -resize 72x72!   icon_72.png
+            convert icon.png -resize 96x96!   icon_96.png
+            convert icon.png -resize 144x144! icon_144.png
+            convert icon.png -resize 192x192! icon_192.png
+          else
+            echo "⚠️  icon.png not found – falling back to generated placeholder icon"
+            THEME_COLOR="${{ steps.vars.outputs.THEME_COLOR }}"
+            APP_INITIAL=$(echo "${{ steps.vars.outputs.APP_NAME }}" | cut -c1 | tr '[:lower:]' '[:upper:]')
+            for SIZE in 48 72 96 144 192; do
+              convert -size ${SIZE}x${SIZE} \
+                "xc:${THEME_COLOR}" \
+                -font DejaVu-Sans-Bold \
+                -pointsize $((SIZE * 55 / 100)) \
+                -fill white \
+                -gravity Center \
+                -annotate 0 "$APP_INITIAL" \
+                "icon_${SIZE}.png" 2>/dev/null || \
+              convert -size ${SIZE}x${SIZE} \
+                "xc:${THEME_COLOR}" \
+                "icon_${SIZE}.png"
+            done
+          fi
 
-          # Create icon with theme color and initial letter
-          for SIZE in 48 72 96 144 192; do
-            convert -size ${SIZE}x${SIZE} \
-              "xc:${THEME_COLOR}" \
-              -font DejaVu-Sans-Bold \
-              -pointsize $((SIZE * 55 / 100)) \
-              -fill white \
-              -gravity Center \
-              -annotate 0 "$APP_INITIAL" \
-              "icon_${SIZE}.png" 2>/dev/null || \
-            convert -size ${SIZE}x${SIZE} \
-              "xc:${THEME_COLOR}" \
-              "icon_${SIZE}.png"
-          done
+          # Copy original 512px icon to web assets (optional but useful for web app)
+          [ -f "icon.png" ] && cp icon.png web_assets/icon-512.png || true
 
-          # Copy icon to web_assets if no icon exists
-          [ ! -f "web_assets/icon-192.png" ] && cp icon_192.png web_assets/icon-192.png || true
-
-          echo "✅ Icons generated"
+          echo "✅ App icons ready (mdpi → xxxhdpi + web icon-512.png)"
 
       # ─── 7. Create Android project structure ────────────────────────────────
       - name: 🏗️ Create Android Project Structure
@@ -240,7 +248,7 @@ jobs:
           # Copy web assets into Android assets
           cp -r web_assets/* android_project/app/src/main/assets/www/
 
-          # Copy icons to mipmap
+          # Copy icons to mipmap (from step 6)
           cp icon_48.png  android_project/app/src/main/res/mipmap-mdpi/ic_launcher.png
           cp icon_72.png  android_project/app/src/main/res/mipmap-hdpi/ic_launcher.png
           cp icon_96.png  android_project/app/src/main/res/mipmap-xhdpi/ic_launcher.png
@@ -298,7 +306,7 @@ jobs:
           zipStorePath=wrapper/dists
           EOF
 
-          # ── gradle.properties (FIX: AndroidX support) ───────────────────────
+          # ── gradle.properties (AndroidX support) ────────────────────────────
           cat > android_project/gradle.properties << 'EOF'
           android.useAndroidX=true
           android.enableJetifier=true
@@ -400,8 +408,8 @@ jobs:
           </manifest>
           EOF
 
-          # ── MainActivity.java ───────────────────────────────────────────────
-          cat > android_project/app/src/main/java/$PKG_PATH/MainActivity.java << EOF
+          # ── MainActivity.java (with TTS JavaScript Bridge + speechSynthesis polyfill) ──
+          cat > android_project/app/src/main/java/$PKG_PATH/MainActivity.java << 'EOF'
           package $PKG_NAME;
 
           import android.app.Activity;
@@ -420,12 +428,18 @@ jobs:
           import android.view.WindowManager;
           import android.widget.ProgressBar;
           import android.widget.RelativeLayout;
+          import android.speech.tts.TextToSpeech;
+          import android.speech.tts.UtteranceProgressListener;
+          import java.util.HashMap;
+          import java.util.Locale;
+          import android.webkit.JavascriptInterface;
 
           public class MainActivity extends Activity {
 
               private WebView webView;
               private ValueCallback<Uri[]> filePathCallback;
               private static final int FILE_CHOOSER_REQUEST = 100;
+              private TextToSpeech tts;
 
               @Override
               protected void onCreate(Bundle savedInstanceState) {
@@ -479,6 +493,16 @@ jobs:
                   progressBar.setLayoutParams(pbParams);
                   progressBar.setMax(100);
 
+                  // Initialize native TTS
+                  tts = new TextToSpeech(this, status -> {
+                      if (status == TextToSpeech.SUCCESS) {
+                          // Ready for Odia, Hindi, English
+                      }
+                  });
+
+                  // Add JavaScript bridge for TTS (name = AndroidTTS)
+                  webView.addJavascriptInterface(new AndroidTTSInterface(), "AndroidTTS");
+
                   webView.setWebChromeClient(new WebChromeClient() {
                       @Override
                       public void onProgressChanged(WebView view, int progress) {
@@ -514,6 +538,36 @@ jobs:
                           startActivity(intent);
                           return true;
                       }
+
+                      @Override
+                      public void onPageFinished(WebView view, String url) {
+                          super.onPageFinished(view, url);
+
+                          // Polyfill speechSynthesis → native Android TTS
+                          // This makes original JS code (that uses window.speechSynthesis) work WITHOUT any changes to index.html or JS files
+                          String polyfill = 
+                              "if (typeof window.speechSynthesis === 'undefined' || !window.speechSynthesis._nativeBridge) {" +
+                              "  window.speechSynthesis = {" +
+                              "    _nativeBridge: true," +
+                              "    speak: function(utterance) {" +
+                              "      if (typeof utterance === 'string') {" +
+                              "        AndroidTTS.speak(utterance);" +
+                              "      } else if (utterance && utterance.text) {" +
+                              "        AndroidTTS.speakWithLang(utterance.text, utterance.lang || 'en');" +
+                              "      }" +
+                              "    }," +
+                              "    cancel: function() { AndroidTTS.stopTTS(); }," +
+                              "    pause: function() { }," +
+                              "    resume: function() { }," +
+                              "    getVoices: function() { return []; }," +
+                              "    pending: false," +
+                              "    speaking: false," +
+                              "    paused: false" +
+                              "  };" +
+                              "  console.log('✅ Native TTS bridge (Odia/English/Hindi auto-detect) injected – speechSynthesis now uses Android TTS');" +
+                              "}";
+                          view.evaluateJavascript(polyfill, null);
+                      }
                   });
 
                   layout.addView(webView);
@@ -521,6 +575,67 @@ jobs:
                   setContentView(layout);
 
                   webView.loadUrl("file:///android_asset/www/index.html");
+              }
+
+              // JavaScript Bridge for TTS (Odia + English + Hindi with auto-detect)
+              private class AndroidTTSInterface {
+                  @JavascriptInterface
+                  public void speak(String text) {
+                      speakWithLang(text, null);
+                  }
+
+                  @JavascriptInterface
+                  public void speakWithLang(String text, String langCode) {
+                      if (text == null || text.trim().isEmpty()) return;
+
+                      Locale locale = detectLocale(text, langCode);
+                      int result = tts.setLanguage(locale);
+
+                      // Fallback to English if language not supported
+                      if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                          tts.setLanguage(Locale.US);
+                      }
+
+                      // QUEUE_ADD = supports "parallel" calls (multiple speaks are queued)
+                      // (single = one at a time with natural flow)
+                      HashMap<String, String> params = new HashMap<>();
+                      params.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, "tts1");
+
+                      tts.speak(text, TextToSpeech.QUEUE_ADD, params);
+                  }
+
+                  @JavascriptInterface
+                  public void stopTTS() {
+                      if (tts != null) tts.stop();
+                  }
+
+                  private Locale detectLocale(String text, String langCode) {
+                      if (langCode != null) {
+                          if (langCode.toLowerCase().startsWith("hi")) return new Locale("hi");
+                          if (langCode.toLowerCase().startsWith("or") || langCode.toLowerCase().startsWith("od")) return new Locale("or");
+                          if (langCode.toLowerCase().startsWith("en")) return Locale.US;
+                      }
+
+                      // Auto-detect by Unicode script
+                      if (containsOdiaScript(text)) return new Locale("or");
+                      if (containsHindiScript(text)) return new Locale("hi");
+
+                      return Locale.US; // default English
+                  }
+
+                  private boolean containsOdiaScript(String text) {
+                      for (char c : text.toCharArray()) {
+                          if (c >= '\u0B00' && c <= '\u0B7F') return true;
+                      }
+                      return false;
+                  }
+
+                  private boolean containsHindiScript(String text) {
+                      for (char c : text.toCharArray()) {
+                          if (c >= '\u0900' && c <= '\u097F') return true;
+                      }
+                      return false;
+                  }
               }
 
               @Override
@@ -544,6 +659,15 @@ jobs:
                   } else {
                       super.onBackPressed();
                   }
+              }
+
+              @Override
+              protected void onDestroy() {
+                  if (tts != null) {
+                      tts.stop();
+                      tts.shutdown();
+                  }
+                  super.onDestroy();
               }
           }
           EOF
@@ -579,7 +703,7 @@ jobs:
           </resources>
           EOF
 
-          echo "✅ All Android source files written (AndroidX enabled via gradle.properties)"
+          echo "✅ All Android source files written (TTS bridge + speechSynthesis polyfill added)"
 
       # ─── 9. Generate Keystore ───────────────────────────────────────────────
       - name: 🔑 Generate Keystore
@@ -680,5 +804,7 @@ jobs:
           echo "| 🔢 Version | ${{ steps.vars.outputs.VERSION_NAME }} (${{ steps.vars.outputs.VERSION_CODE }}) |" >> $GITHUB_STEP_SUMMARY
           echo "| 📱 Min SDK | Android API ${{ steps.vars.outputs.MIN_SDK }} |" >> $GITHUB_STEP_SUMMARY
           echo "| 📦 Output | ${{ steps.vars.outputs.BUILD_TYPE }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🔊 TTS | Odia + English + Hindi (auto-detect) via JavaScript bridge |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🖼️ Icon | GitHub uploaded icon.png (512×512) used |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "⬇️ Download your signed APK/AAB from the **Artifacts** section above." >> $GITHUB_STEP_SUMMARY
