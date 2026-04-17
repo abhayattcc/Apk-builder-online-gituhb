@@ -190,33 +190,42 @@ jobs:
           echo "✅ Web assets prepared:"
           ls -la web_assets/
 
-      # ─── 6. Generate icon ───────────────────────────────────────────────────
-      - name: 🎨 Generate App Icon
+      # ─── 6. Prepare App Icon (NEW: Use uploaded icon.png 512×512 if present) ─
+      - name: 🎨 Prepare App Icon (use uploaded icon.png 512px or generate fallback)
         run: |
           sudo apt-get install -y imagemagick -q
 
-          THEME_COLOR="${{ steps.vars.outputs.THEME_COLOR }}"
-          APP_INITIAL=$(echo "${{ steps.vars.outputs.APP_NAME }}" | cut -c1 | tr '[:lower:]' '[:upper:]')
+          if [ -f "icon.png" ]; then
+            echo "✅ Found uploaded icon.png (512×512) – resizing to all mipmap densities"
+            convert icon.png -resize 48x48   icon_48.png
+            convert icon.png -resize 72x72   icon_72.png
+            convert icon.png -resize 96x96   icon_96.png
+            convert icon.png -resize 144x144 icon_144.png
+            convert icon.png -resize 192x192 icon_192.png
+          else
+            echo "⚠️ No icon.png found – generating default icon from theme color"
+            THEME_COLOR="${{ steps.vars.outputs.THEME_COLOR }}"
+            APP_INITIAL=$(echo "${{ steps.vars.outputs.APP_NAME }}" | cut -c1 | tr '[:lower:]' '[:upper:]')
 
-          # Create icon with theme color and initial letter
-          for SIZE in 48 72 96 144 192; do
-            convert -size ${SIZE}x${SIZE} \
-              "xc:${THEME_COLOR}" \
-              -font DejaVu-Sans-Bold \
-              -pointsize $((SIZE * 55 / 100)) \
-              -fill white \
-              -gravity Center \
-              -annotate 0 "$APP_INITIAL" \
-              "icon_${SIZE}.png" 2>/dev/null || \
-            convert -size ${SIZE}x${SIZE} \
-              "xc:${THEME_COLOR}" \
-              "icon_${SIZE}.png"
-          done
+            for SIZE in 48 72 96 144 192; do
+              convert -size ${SIZE}x${SIZE} \
+                "xc:${THEME_COLOR}" \
+                -font DejaVu-Sans-Bold \
+                -pointsize $((SIZE * 55 / 100)) \
+                -fill white \
+                -gravity Center \
+                -annotate 0 "$APP_INITIAL" \
+                "icon_${SIZE}.png" 2>/dev/null || \
+              convert -size ${SIZE}x${SIZE} \
+                "xc:${THEME_COLOR}" \
+                "icon_${SIZE}.png"
+            done
+          fi
 
-          # Copy icon to web_assets if no icon exists
+          # Copy 192px icon to web_assets (for web manifest if needed)
           [ ! -f "web_assets/icon-192.png" ] && cp icon_192.png web_assets/icon-192.png || true
 
-          echo "✅ Icons generated"
+          echo "✅ App icons prepared (512px uploaded icon used when available)"
 
       # ─── 7. Create Android project structure ────────────────────────────────
       - name: 🏗️ Create Android Project Structure
@@ -240,7 +249,7 @@ jobs:
           # Copy web assets into Android assets
           cp -r web_assets/* android_project/app/src/main/assets/www/
 
-          # Copy icons to mipmap
+          # Copy icons to mipmap folders (from either uploaded or generated)
           cp icon_48.png  android_project/app/src/main/res/mipmap-mdpi/ic_launcher.png
           cp icon_72.png  android_project/app/src/main/res/mipmap-hdpi/ic_launcher.png
           cp icon_96.png  android_project/app/src/main/res/mipmap-xhdpi/ic_launcher.png
@@ -298,7 +307,7 @@ jobs:
           zipStorePath=wrapper/dists
           EOF
 
-          # ── gradle.properties (FIX: AndroidX support) ───────────────────────
+          # ── gradle.properties (AndroidX support – required) ─────────────────
           cat > android_project/gradle.properties << 'EOF'
           android.useAndroidX=true
           android.enableJetifier=true
@@ -579,7 +588,7 @@ jobs:
           </resources>
           EOF
 
-          echo "✅ All Android source files written (AndroidX enabled via gradle.properties)"
+          echo "✅ All Android source files written (AndroidX enabled)"
 
       # ─── 9. Generate Keystore ───────────────────────────────────────────────
       - name: 🔑 Generate Keystore
