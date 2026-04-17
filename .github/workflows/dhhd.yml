@@ -240,18 +240,9 @@ jobs:
 
           echo "✅ Android project structure created"
 
-      # ─── 8. Write Android source files ──────────────────────────────────────
-      - name: 📝 Write Android Source Files
+      # ─── 8. Write Gradle Configuration ──────────────────────────────────────
+      - name: 📝 Write Gradle Configuration
         run: |
-          PKG_NAME="${{ steps.vars.outputs.PKG_NAME }}"
-          PKG_PATH="${{ steps.vars.outputs.PKG_PATH }}"
-          APP_NAME="${{ steps.vars.outputs.APP_NAME }}"
-          VERSION_NAME="${{ steps.vars.outputs.VERSION_NAME }}"
-          VERSION_CODE="${{ steps.vars.outputs.VERSION_CODE }}"
-          MIN_SDK="${{ steps.vars.outputs.MIN_SDK }}"
-          ORIENTATION="${{ steps.vars.outputs.ORIENTATION }}"
-          ANDROID_COLOR=$(echo "${{ steps.vars.outputs.THEME_COLOR }}" | sed 's/#//')
-
           # ── settings.gradle ────────────────────────────────────────────────
           cat > android_project/settings.gradle << 'EOF'
           pluginManagement {
@@ -294,6 +285,24 @@ jobs:
           android.useAndroidX=true
           android.enableJetifier=true
           EOF
+
+          # ── gradlew ─────────────────────────────────────────────────────────
+          curl -sL "https://raw.githubusercontent.com/gradle/gradle/v8.6.0/gradlew" \
+            -o android_project/gradlew 2>/dev/null || \
+          cat > android_project/gradlew << 'GRADLEW'
+          #!/bin/sh
+          exec gradle "$@"
+          GRADLEW
+          chmod +x android_project/gradlew
+
+      # ─── 9. Write App Build & Manifest ──────────────────────────────────────
+      - name: 📝 Write App Build & Manifest
+        run: |
+          PKG_NAME="${{ steps.vars.outputs.PKG_NAME }}"
+          VERSION_NAME="${{ steps.vars.outputs.VERSION_NAME }}"
+          VERSION_CODE="${{ steps.vars.outputs.VERSION_CODE }}"
+          MIN_SDK="${{ steps.vars.outputs.MIN_SDK }}"
+          ORIENTATION="${{ steps.vars.outputs.ORIENTATION }}"
 
           # ── app/build.gradle ────────────────────────────────────────────────
           cat > android_project/app/build.gradle << EOF
@@ -341,18 +350,7 @@ jobs:
           }
           EOF
 
-          # ── gradlew ─────────────────────────────────────────────────────────
-          curl -sL "https://raw.githubusercontent.com/gradle/gradle/v8.6.0/gradlew" \
-            -o android_project/gradlew 2>/dev/null || \
-          cat > android_project/gradlew << 'GRADLEW'
-          #!/bin/sh
-          exec gradle "$@"
-          GRADLEW
-          chmod +x android_project/gradlew
-
           # ── AndroidManifest.xml ─────────────────────────────────────────────
-          # NOTE: RECORD_AUDIO is required for Web Speech API (SpeechRecognition).
-          # FOREGROUND_SERVICE allows TTS to continue when app is backgrounded.
           cat > android_project/app/src/main/AndroidManifest.xml << EOF
           <?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://schemas.android.com/apk/res/android"
@@ -394,13 +392,13 @@ jobs:
           </manifest>
           EOF
 
+      # ─── 10. Write MainActivity ─────────────────────────────────────────────
+      - name: 📝 Write MainActivity
+        run: |
+          PKG_NAME="${{ steps.vars.outputs.PKG_NAME }}"
+          PKG_PATH="${{ steps.vars.outputs.PKG_PATH }}"
+
           # ── MainActivity.java ───────────────────────────────────────────────
-          # KEY DESIGN:
-          #   1. AndroidTTSBridge  – exposes speak/stop/getVoices to JS via @JavascriptInterface
-          #   2. injectTTSShim()   – overrides window.speechSynthesis in the page with a shim
-          #      that delegates all calls to the native bridge.  index.html is NEVER modified.
-          #   3. The shim fires the same onstart/onend/onboundary callbacks so the existing
-          #      JS highlight/pagination logic in index.html continues to work unchanged.
           cat > android_project/app/src/main/java/$PKG_PATH/MainActivity.java << 'JAVA_EOF'
           package PKG_NAME_PLACEHOLDER;
 
@@ -817,6 +815,12 @@ jobs:
           sed -i "s/PKG_NAME_PLACEHOLDER/$PKG_NAME/g" \
             android_project/app/src/main/java/$PKG_PATH/MainActivity.java
 
+      # ─── 11. Write Android Resources ────────────────────────────────────────
+      - name: 📝 Write Android Resources
+        run: |
+          APP_NAME="${{ steps.vars.outputs.APP_NAME }}"
+          ANDROID_COLOR=$(echo "${{ steps.vars.outputs.THEME_COLOR }}" | sed 's/#//')
+
           # ── res/values/strings.xml ──────────────────────────────────────────
           cat > android_project/app/src/main/res/values/strings.xml << EOF
           <?xml version="1.0" encoding="utf-8"?>
@@ -850,7 +854,7 @@ jobs:
 
           echo "✅ All Android source files written (TTS Java bridge included)"
 
-      # ─── 9. Generate Keystore ───────────────────────────────────────────────
+      # ─── 12. Generate Keystore ──────────────────────────────────────────────
       - name: 🔑 Generate Keystore
         run: |
           KS_PASSWORD="${{ steps.vars.outputs.KS_PASSWORD }}"
@@ -874,13 +878,13 @@ jobs:
 
           echo "✅ Keystore generated (valid for $VALIDITY years)"
 
-      # ─── 10. Install Gradle ─────────────────────────────────────────────────
+      # ─── 13. Install Gradle ─────────────────────────────────────────────────
       - name: ⚙️ Install Gradle
         uses: gradle/actions/setup-gradle@v3
         with:
           gradle-version: '8.6'
 
-      # ─── 11. Build APK ──────────────────────────────────────────────────────
+      # ─── 14. Build APK ──────────────────────────────────────────────────────
       - name: 🔨 Build Release APK
         if: ${{ steps.vars.outputs.BUILD_TYPE == 'APK' || steps.vars.outputs.BUILD_TYPE == 'BOTH' }}
         working-directory: android_project
@@ -892,7 +896,7 @@ jobs:
           gradle assembleRelease --no-daemon --stacktrace
           echo "✅ APK build complete"
 
-      # ─── 12. Build AAB ──────────────────────────────────────────────────────
+      # ─── 15. Build AAB ──────────────────────────────────────────────────────
       - name: 🔨 Build Release AAB
         if: ${{ steps.vars.outputs.BUILD_TYPE == 'AAB' || steps.vars.outputs.BUILD_TYPE == 'BOTH' }}
         working-directory: android_project
@@ -904,7 +908,7 @@ jobs:
           gradle bundleRelease --no-daemon --stacktrace
           echo "✅ AAB build complete"
 
-      # ─── 13. Collect outputs ────────────────────────────────────────────────
+      # ─── 16. Collect outputs ────────────────────────────────────────────────
       - name: 📋 Collect Build Outputs
         run: |
           mkdir -p build_output
@@ -918,7 +922,7 @@ jobs:
           echo "📦 Build outputs:"
           ls -lh build_output/
 
-      # ─── 14. Upload artifacts ───────────────────────────────────────────────
+      # ─── 17. Upload artifacts ───────────────────────────────────────────────
       - name: 📤 Upload APK Artifact
         if: ${{ steps.vars.outputs.BUILD_TYPE == 'APK' || steps.vars.outputs.BUILD_TYPE == 'BOTH' }}
         uses: actions/upload-artifact@v4
@@ -935,7 +939,7 @@ jobs:
           path: build_output/*.aab
           retention-days: 30
 
-      # ─── 15. Summary ────────────────────────────────────────────────────────
+      # ─── 18. Summary ────────────────────────────────────────────────────────
       - name: 📊 Build Summary
         run: |
           echo "## ✅ Build Successful! 🎉" >> $GITHUB_STEP_SUMMARY
