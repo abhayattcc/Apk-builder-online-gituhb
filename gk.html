@@ -1,0 +1,2868 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="google-site-verification" content="GNlWksk94nrET0bFBLQeW7onApzNAXeVuzMX36BCp4I" />
+    <title>Lucent GK Online Mock Test 2026 | Free Practice & Quiz</title>
+<meta name="title" content="Lucent GK Online Mock Test 2026 | Free Practice & Quiz">
+<meta name="description" content="Master General Knowledge with our free Lucent GK Online Mock Test. Covers History, Geography, Polity, Science, and Economy for SSC, Railway, and State Exams.">
+    <link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#ff6f61">
+<link rel="apple-touch-icon" href="icon-192.png">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.0.4/pako.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/pdf.min.js"></script>
+    <style>
+        @font-face {
+            font-family: 'Noto Sans';
+            font-weight: bold;
+            src: url('https://cdn.jsdelivr.net/npm/@fontsource/noto-sans@5.0.22/files/noto-sans-all-700-normal.woff') format('woff');
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: bold;
+            background: linear-gradient(135deg, #a1c4fd, #c2e9fb);
+            overflow-x: hidden;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #1a237e;
+        }
+        .container {
+            text-align: center;
+            width: 100%;
+            max-width: 800px;
+            padding: 20px;
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 15px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+            margin-bottom: 20px;
+        }
+        .button {
+            flex: 1;
+            padding: 12px;
+            font-size: 18px;
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: bold;
+            text-decoration: none;
+            color: white;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            border-radius: 15px;
+            cursor: pointer;
+            text-align: center;
+            min-width: 100px;
+            transition: transform 0.3s, background 0.3s;
+        }
+        .button:hover {
+            transform: scale(1.05);
+            background: linear-gradient(45deg, #ff4b4b, #3ab8b0);
+        }
+        .toggle-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            min-width: 200px;
+        }
+        .toggle-label {
+            font-size: 16px;
+            color: #d81b60;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 6px 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.3s, background 0.3s;
+        }
+        .toggle-label:hover {
+            transform: scale(1.05);
+            background: #ffffff;
+        }
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 28px;
+            flex-shrink: 0;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #e91e63;
+            transition: 0.4s;
+            border-radius: 28px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #2196f3;
+        }
+        input:checked + .slider:before {
+            transform: translateX(22px);
+        }
+        .section {
+            margin-bottom: 40px;
+        }
+        .section-title {
+            color: #d81b60;
+            font-size: 36px;
+            text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
+            margin-bottom: 20px;
+            animation: bounce 2s infinite;
+        }
+        .chapter-list {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            list-style: none;
+            padding: 0;
+        }
+        .chapter-item {
+            background: #ffd54f;
+            color: #1a237e;
+            padding: 20px;
+            border-radius: 15px;
+            font-size: 24px;
+            cursor: pointer;
+            width: 200px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s, background 0.3s;
+            border: 3px solid #e91e63;
+            text-align: center;
+        }
+        .chapter-item:hover {
+            transform: scale(1.1);
+            background: #ffeb3b;
+        }
+        .content {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #d4fc79, #96e6a1);
+            padding: 20px;
+            box-sizing: border-box;
+            overflow-y: auto;
+            z-index: 10;
+        }
+        .content.active {
+            display: block;
+        }
+        .content-inner {
+            font-size: 20px;
+            color: #1a238e;
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #d81b60;
+            max-width: 90%;
+            margin: 20px auto 120px auto;
+            word-wrap: break-word;
+            min-height: 50%;
+            overflow-y: auto;
+            max-height: calc(100vh - 160px);
+        }
+        .content-text {
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: Regular;
+            white-space: pre-wrap;
+        }
+        .content-inner span {
+            display: inline;
+            cursor: pointer;
+        }
+        .content-inner .highlight {
+            background: #00ff00;
+            border-radius: 6px;
+            padding: 3px 5px;
+            animation: highlightGlow 1.2s ease-in-out infinite;
+        }
+        .answer-highlight {
+            background: #00ff00;
+            border-radius: 6px;
+            padding: 2px 4px;
+            font-weight: bolder;
+        }
+        .content-inner img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+            margin: 10px 0;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+        }
+        @keyframes highlightGlow {
+            0% { background: #fff59d; }
+            50% { background: #ffeb3b; }
+            100% { background: #fff59d; }
+        }
+        .home-button {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #e91e63;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 25px;
+            font-size: 20px;
+            cursor: pointer;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s;
+            z-index: 20;
+            border: none;
+        }
+        .home-button:hover {
+            transform: translateX(-50%) scale(1.1);
+            background: #c2185b;
+        }
+        .voice-controls {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 20;
+        }
+        .voice-button, .stop-button {
+            background: #2196f3;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 20px;
+            cursor: pointer;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s;
+            border: none;
+        }
+        .stop-button {
+            background: #f44336;
+        }
+        .voice-button:hover, .stop-button:hover {
+            transform: scale(1.1);
+        }
+        .stop-button:hover {
+            background: #d32f2f;
+        }
+        .voice-button:disabled, .stop-button:disabled {
+            background: #90caf9;
+            cursor: not-allowed;
+        }
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-20px); }
+            60% { transform: translateY(-10px); }
+        }
+        .popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.9);
+            background: #f3e7f9;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            max-width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+            transition: transform 0.4s ease, opacity 0.4s ease;
+            opacity: 0;
+        }
+        .popup.visible {
+            display: block;
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+        .popup-content {
+            margin-bottom: 15px;
+        }
+        .popup-content div {
+            padding: 12px;
+            border-bottom: 2px dashed #b3e5fc;
+            font-size: 18px;
+            color: #1a237e;
+            background: #e1f5fe;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            transition: transform 0.3s ease;
+        }
+        .popup-content div:hover {
+            transform: scale(1.02);
+        }
+        .popup-content img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+        .popup-content ul {
+            list-style: none;
+            padding: 0;
+        }
+        .popup-content li {
+            padding: 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #c8e6c9;
+            font-size: 18px;
+            color: #1a237e;
+            background: #ffffff;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            transition: background 0.3s ease;
+        }
+        .popup-content li:hover {
+            background: #c8e6c9;
+        }
+        .popup-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .popup-close {
+            padding: 8px 15px;
+            font-size: 16px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            color: white;
+            background: #f44336;
+            transition: transform 0.2s ease;
+        }
+        .popup-close:hover {
+            transform: scale(1.1);
+        }
+        .dictionary-section {
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            margin-bottom: 40px;
+        }
+        .dictionary-section.hidden {
+            display: none;
+        }
+        #sections.hidden {
+            display: none;
+        }
+        .dictionary-search {
+            width: 100%;
+            padding: 10px;
+            font-size: 18px;
+            border: 2px solid #d81b60;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            outline: none;
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: bold;
+        }
+        .dictionary-results {
+            min-height: 100px;
+            padding: 10px;
+            border-radius: 10px;
+            background: #e1f5fe;
+        }
+        .dictionary-results div {
+            padding: 12px;
+            border-bottom: 2px dashed #b3e5fc;
+            font-size: 18px;
+            color: #1a237e;
+            background: #e1f5fe;
+            border-radius: 10px;
+            margin-bottom: 8px;
+        }
+        .dictionary-results img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+        .dictionary-suggestions {
+            margin-top: 10px;
+        }
+        .dictionary-suggestions ul {
+            list-style: none;
+            padding: 0;
+        }
+        .dictionary-suggestions li {
+            padding: 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #c8e6c9;
+            font-size: 18px;
+            color: #1a237e;
+            background: #ffffff;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            transition: background 0.3s ease;
+        }
+        .dictionary-suggestions li:hover {
+            background: #c8e6c9;
+        }
+        .speak-button {
+            background: #2196f3;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 18px;
+            cursor: pointer;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s;
+            border: none;
+            margin-top: 10px;
+        }
+        .speak-button:hover {
+            transform: scale(1.1);
+        }
+        .speak-button:disabled {
+            background: #90caf9;
+            cursor: not-allowed;
+        }
+        .image-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 5px;
+        }
+        .delete-button, .restore-button {
+            padding: 8px 15px;
+            font-size: 16px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            color: white;
+            transition: transform 0.2s ease;
+        }
+        .delete-button {
+            background: #f44336;
+        }
+        .restore-button {
+            background: #4caf50;
+        }
+        .delete-button:hover, .restore-button:hover {
+            transform: scale(1.1);
+        }
+        .file-upload {
+            margin: 20px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        .file-upload input {
+            font-size: 16px;
+        }
+        .dictionary-form {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e1f5fe;
+            border-radius: 10px;
+        }
+        .dictionary-form input {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 2px solid #d81b60;
+            border-radius: 5px;
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: bold;
+        }
+        .dictionary-form button {
+            background: #2196f3;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        .dictionary-form button:hover {
+            background: #1976d2;
+        }
+        .container::before, .content::before, .popup::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="50" height="50"><path d="M25 5l5 15h15l-12 9 5 15-13-9-13 9 5-15-12-9h15z" fill="%23ffffff30"/></svg>') repeat;
+            opacity: 0.2;
+            z-index: -1;
+        }
+        .hidden {
+            display: none !important;
+        }
+        #progress-container {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            max-width: 600px;
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+            z-index: 2000;
+            text-align: center;
+            display: none;
+        }
+        #progress-container.visible {
+            display: block;
+        }
+        #progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        #progress-fill {
+            height: 100%;
+            background: #4caf50;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        #progress-text {
+            margin-top: 10px;
+            font-size: 18px;
+            color: #d81b60;
+        }
+        #processing-status {
+            font-size: 16px;
+            color: #d81b60;
+            text-align: center;
+            margin-top: 10px;
+        }
+        @media (max-width: 600px) {
+            .refresh-button, .button, .toggle-label {
+                padding: 8px;
+                font-size: 14px;
+                min-width: 80px;
+            }
+            .toggle-switch {
+                width: 40px;
+                height: 22px;
+            }
+            .slider:before {
+                height: 16px;
+                width: 16px;
+                left: 3px;
+                bottom: 3px;
+            }
+            input:checked + .slider:before {
+                transform: translateX(18px);
+            }
+        }
+        .skip-btn {
+            margin: 10px 0;
+            padding: 8px 16px;
+            background: #ff9800;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .skip-btn:hover {
+            background: #f57c00;
+        }
+        .skip-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .option-btn {
+            display: block;
+            width: 100%;
+            margin: 5px 0;
+            padding: 10px;
+            background: #f0f0f0;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: left;
+        }
+        .option-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+        .mcq {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            background: #fafafa;
+        }
+        .question-text {
+            font-size: 18px;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        .options {
+            margin-bottom: 10px;
+        }
+        .answer, .feedback {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .answer {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+        }
+        .feedback {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="chapterContainer">
+        <div class="header">
+            <div class="toggle-container">
+                <span class="toggle-label">Dictionary</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="sectionToggle">
+                    <span class="slider"></span>
+                </label>
+                <span class="toggle-label">Chapters</span>
+            </div>
+            <button class="button" id="helpButton">Help</button>
+        </div>
+        <div class="dictionary-section" id="dictionarySection">
+            <h1 class="section-title">Dictionary</h1>
+            <input type="text" class="dictionary-search" id="dictionarySearch" placeholder="Search word...">
+            <button class="speak-button" id="dictionarySpeakButton" title="Speak Results" disabled>🗣️</button>
+            <div class="dictionary-results" id="dictionaryResults"></div>
+            <div class="dictionary-suggestions" id="dictionarySuggestions"></div>
+            <div class="dictionary-form">
+                <h3>Add New Word</h3>
+                <input type="text" id="newEnglish" placeholder="English">
+                <input type="text" id="newOdia" placeholder="Odia">
+                <input type="text" id="newHindi" placeholder="Hindi">
+                <input type="file" id="newImage" accept="image/*">
+                <button id="saveWordButton">Save Word</button>
+            </div>
+        </div>
+        <div id="sections"></div>
+    </div>
+    <div class="content" id="contentArea">
+        <button class="home-button" id="homeButton">Home</button>
+        <div class="voice-controls">
+            <button class="voice-button" id="voiceButton" title="Play/Pause">🗣️</button>
+            <button class="stop-button" id="stopButton" title="Stop" disabled>🛑</button>
+        </div>
+        <div id="contentInner" class="content-inner"></div>
+        <div id="processing-status"></div>
+    </div>
+    <div class="popup" id="popup">
+        <div class="popup-content" id="popupContent"></div>
+        <div class="popup-buttons">
+            <button class="popup-close" id="popupClose">🛑 Close</button>
+        </div>
+    </div>
+    <div id="progress-container">
+        <div id="progress-bar"><div id="progress-fill"></div></div>
+        <div id="progress-text">Loading...</div>
+    </div>
+<script>
+const CACHE_NAME = 'odia-gk-app-v9';
+const dbFiles = {
+    english_odia: 'https://raw.githubusercontent.com/abhayattcc/Best-odia-dictionary/refs/heads/main/data/english_odia.db.gz',
+    english_hindi: 'https://raw.githubusercontent.com/abhayattcc/Best-odia-dictionary/refs/heads/main/data/english_hindi.db.gz'
+};
+const sections = [
+    {
+        title: "ଓଡ଼ିଆ GK",
+        language: "odia",
+        chapters: [
+            { name: "Content", type: "text", url: "https://raw.githubusercontent.com/abhayattcc/lucentgkonline/refs/heads/lucentgkonline/Content.txt" },
+            { name: "ଜୀବ ବିଜ୍ଞାନ", type: "text", url: "https://raw.githubusercontent.com/abhayattcc/lucentgkonline/refs/heads/lucentgkonline/biology(1).txt" },
+            { name: "ରସାୟନ ବିଜ୍ଞାନ", type: "text", url: "https://raw.githubusercontent.com/abhayattcc/lucentgkonline/refs/heads/lucentgkonline/chemistry(1).txt" },
+            { name: "ଅର୍ଥନୀତି", type: "text", url: "https://raw.githubusercontent.com/abhayattcc/lucentgkonline/refs/heads/lucentgkonline/economics(1).txt" },
+            { name: "ଇତିହାସ", type: "text", url: "https://raw.githubusercontent.com/abhayattcc/lucentgkonline/refs/heads/lucentgkonline/history(1).txt" },
+            { name: "ଭୂଗୋଳ", type: "text", url: "https://raw.githubusercontent.com/abhayattcc/lucentgkonline/refs/heads/lucentgkonline/geography(1).txt" },
+            { name: "ଭୌତିକ ବିଜ୍ଞାନ", type: "text", url: "https://raw.githubusercontent.com/abhayattcc/lucentgkonline/refs/heads/lucentgkonline/physics(1).txt" },
+            { name: "ରାଜନୀତି ବିଜ୍ଞାନ", type: "text", url: "https://raw.githubusercontent.com/abhayattcc/lucentgkonline/refs/heads/lucentgkonline/polity(1).txt" },
+            { name: "Statik Gk ଓଡିଆ", type: "text", url: "https://raw.githubusercontent.com/abhayattcc/lucentgkonline/refs/heads/lucentgkonline/statikgk(1).txt" },
+            { name: "ଓଡ଼ିଆ GK Theory", type: "text", url: "https://raw.githubusercontent.com/abhayattcc/lucentgkonline/refs/heads/lucentgkonline/gktheory(1).txt" }
+        ]
+    },
+    {
+        title: "English GK",
+        language: "english",
+        chapters: [
+            { name: "Content", type: "text", url: "https://raw.githubusercontent.com/abhayattcc/lucentgkonline/refs/heads/lucentgkonline/Content.txt" },
+            { name: "Biology", type: "text", url: "https://raw.githubusercontent.com/abhayattcc/lucentgkonline/refs/heads/lucentgkonline/Biology.txt" },
+            { name: "Chemistry", type: "text", url: "https://raw.githubusercontent.com/abhayattcc/lucentgkonline/refs/heads/lucentgkonline/Chemistry.txt" },
+            { name: "Economics", type: "text", url: "https://raw.githubusercontent.com/abhayattcc/lucentgkonline/refs/heads/lucentgkonline/Economics.txt" },
+            { name: "History", type: "text", url: "https://raw.githubusercontent.com/abhayattcc/lucentgkonline/refs/heads/lucentgkonline/History.txt" },
+            { name: "Geography", type: "text", url: "https://raw.githubusercontent.com/abhayattcc/lucentgkonline/refs/heads/lucentgkonline/Geography.txt" },
+            { name: "Physics", type: "text", url: "https://raw.githubusercontent.com/abhayattcc/lucentgkonline/refs/heads/lucentgkonline/Physics.txt" },
+            { name: "Polity", type: "text", url: "https://raw.githubusercontent.com/abhayattcc/lucentgkonline/refs/heads/lucentgkonline/Polity.txt" },
+            { name: "Statik Gk", type: "text", url: "https://raw.githubusercontent.com/abhayattcc/lucentgkonline/refs/heads/lucentgkonline/StatikGk.txt" },
+            { name: "GK Theory", type: "text", url: "https://raw.githubusercontent.com/abhayattcc/lucentgkonline/refs/heads/lucentgkonline/GkTheory.txt" }
+        ]
+    },
+    {
+        title: "ଓଡ଼ିଆ ବ୍ୟାକରଣ",
+        language: "odia",
+        chapters: [
+            { name: "ଭାଷା", type: "html", url: "https://raw.githubusercontent.com/abhayattcc/lucentgkonline/refs/heads/lucentgkonline/1.html" },
+            { name: "ଶବ୍ଦ ଗଠନ", type: "html", url: "https://raw.githubusercontent.com/abhayattcc/lucentgkonline/refs/heads/lucentgkonline/2.html" },
+            { name: "ବାକ୍ୟ", type: "html", url: "https://raw.githubusercontent.com/abhayattcc/lucentgkonline/refs/heads/lucentgkonline/3.html" },
+            { name: "ସନ୍ଧି", type: "html", url: "https://raw.githubusercontent.com/abhayattcc/lucentgkonline/refs/heads/lucentgkonline/4.html" },
+            { name: "ପ୍ରତ୍ୟୟ", type: "html", url: "https://raw.githubusercontent.com/abhayattcc/lucentgkonline/refs/heads/lucentgkonline/5.html" },
+            { name: "ରୁଢ଼ି ଓ ଲୋକବାଣୀ", type: "html", url: "https://raw.githubusercontent.com/abhayattcc/lucentgkonline/refs/heads/lucentgkonline/6.html" },
+            { name: "ସମାସ", type: "html", url: "https://raw.githubusercontent.com/abhayattcc/lucentgkonline/refs/heads/lucentgkonline/7.html" },
+            { name: "କାରକ ଓ ବିଭକ୍ତି", type: "html", url: "https://raw.githubusercontent.com/abhayattcc/lucentgkonline/refs/heads/lucentgkonline/8.html" },
+            { name: "ଣତ୍ବ ବିଧି ଷତ୍ବ ବିଧି", type: "html", url: "https://raw.githubusercontent.com/abhayattcc/lucentgkonline/refs/heads/lucentgkonline/9.html" },
+            { name: "ଛନ୍ଦ", type: "html", url: "https://raw.githubusercontent.com/abhayattcc/lucentgkonline/refs/heads/lucentgkonline/10.html" },
+            { name: "ଅଳଙ୍କାର", type: "html", url: "https://raw.githubusercontent.com/abhayattcc/lucentgkonline/refs/heads/lucentgkonline/11.html" },
+            { name: "ବିଶେଷ୍ୟ ବିଶେଷଣ", type: "html", url: "https://raw.githubusercontent.com/abhayattcc/lucentgkonline/refs/heads/lucentgkonline/12.html" },
+            { name: "ଅବ୍ୟୟ", type: "html", url: "https://raw.githubusercontent.com/abhayattcc/lucentgkonline/refs/heads/lucentgkonline/13.html" }
+        ]
+    },
+    {
+        title: "English Grammar",
+        language: "english",
+        chapters: [
+            { name: "English Grammar", type: "text", url: "https://raw.githubusercontent.com/abhayattcc/lucentgkonline/refs/heads/lucentgkonline/EnglishGrammar.txt" }
+        ]
+    },
+    {
+        title: "Computer",
+        language: "english",
+        chapters: [
+            { name: "Computer", type: "text", url: "https://raw.githubusercontent.com/abhayattcc/lucentgkonline/refs/heads/lucentgkonline/computer.txt" }
+        ]
+    }
+];
+
+const chapterUrls = [...new Set(sections.flatMap(section => 
+    section.chapters.map(chapter => chapter.url)
+))];
+const STATIC_ASSETS = [
+    '/',
+    'https://cdnjs.cloudflare.com/ajax/libs/pako/2.0.4/pako.min.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.min.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.wasm',
+    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/pdf.min.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/pdf.worker.min.js',
+    'https://cdn.jsdelivr.net/npm/@fontsource/noto-sans@5.0.22/files/noto-sans-all-700-normal.woff',
+    ...Object.values(dbFiles),
+    ...chapterUrls
+];
+let dbEnglishOdia, dbEnglishHindi;
+let defaultEnglishVoice, defaultHindiVoice, defaultOdiaVoice;
+let speechUtterances = [];
+let currentSentenceIndex = -1;
+let currentMcqIndex = 0;
+// Added for MCQ tracking
+let sentences = [];
+let isReadingAloud = false;
+let isPaused = false;
+let activeUtterances = 0;
+let lastTappedSentenceIndex = -1;
+let lastTappedFile = null;
+let currentSectionIndex = null;
+let currentChapterIndex = null;
+let voices = [];
+let isTTSSupported = 'speechSynthesis' in window;
+let dictionaryTimeout = null;
+let isDictionaryReading = false;
+let currentSubjectsMap = null;
+let currentChapterName = '';
+let currentSubjectName = '';
+let currentBatch = 0;
+let totalBatches = 0;
+let currentScore = 0;
+let currentAttempted = 0;
+let currentBatchSize = 0;
+let currentSectionIdx = null;
+let currentChapterIdx = null;
+let currentSubject = '';
+let subPages = [];
+let lastEnglishGrammarPageIndex = -1;
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function extractGrammarTopic(sentence) {
+    const lower = sentence.toLowerCase().trim();
+    const topics = {
+        'nouns': 'NOUNS', 'noun': 'NOUNS', 'pronouns': 'PRONOUNS', 'pronoun': 'PRONOUNS',
+        'verbs': 'VERBS', 'verb': 'VERBS', 'adjectives': 'ADJECTIVES', 'adjective': 'ADJECTIVES',
+        'adverbs': 'ADVERBS', 'adverb': 'ADVERBS', 'prepositions': 'PREPOSITIONS', 'preposition': 'PREPOSITIONS',
+        'conjunctions': 'CONJUNCTIONS', 'conjunction': 'CONJUNCTIONS', 'interjections': 'INTERJECTIONS',
+        'interjection': 'INTERJECTIONS', 'tenses': 'TENSES', 'tense': 'TENSES', 'sentences': 'SENTENCES',
+        'sentence': 'SENTENCES', 'punctuation': 'PUNCTUATION'
+    };
+    for (const [key, value] of Object.entries(topics)) {
+        if (lower.includes(key)) {
+            return value;
+        }
+    }
+    return sentence.split(' ').pop().toUpperCase().replace(/[^\w]/g, '');
+}
+
+function parseChapterToSubjects(lines, lang, chapterName = '') {
+    const subjects = new Map();
+    let currentSubject = null;
+    let currentMcqs = [];
+    let i = 0;
+    const numRe = /^[0-9\u0B66-\u0B6F]+\.\s*/;
+    const oneRe = /^1\.\s*/;
+    const odiaOneRe = /^୧\.\s*/;
+    const optRe = lang === 'english' ? /^([a-e]\)|\([1-5]\)|[1-5]\.)\s*/i : /^([କ-ଙ]\)|\([୧-୫]\)|[୧-୫]\.)\s*/;
+    const ansRe = lang === 'english' ? /^Answer:\s*([a-e]\)|\([1-5]\)|[1-5]\.)/i : /^ଉତ୍ତର:\s*([କ-ଙ]\)|\([୧-୫]\)|[୧-୫]\.)/;
+    const isEnglishGrammar = lang === 'english' && chapterName.toLowerCase().includes('grammar');
+    
+    while (i < lines.length) {
+        while (i < lines.length && !lines[i].trim()) i++;
+        if (i >= lines.length) break;
+        const line = lines[i].trim();
+        const isNumbered = numRe.test(line);
+        const isOne = oneRe.test(line) || odiaOneRe.test(line);
+        if (!isNumbered) {
+            let j = i + 1;
+            while (j < lines.length && !lines[j].trim()) j++;
+            if (j < lines.length) {
+                const nextLine = lines[j].trim();
+                if (oneRe.test(nextLine) || odiaOneRe.test(nextLine)) {
+                    if (currentSubject && currentMcqs.length > 0) {
+                        subjects.set(currentSubject, [...currentMcqs]);
+                        currentMcqs = [];
+                    }
+                    if (isEnglishGrammar) {
+                        currentSubject = extractGrammarTopic(line);
+                    } else {
+                        currentSubject = line;
+                    }
+                    i = j;
+                    continue;
+                }
+            }
+            i++;
+            continue;
+        } else {
+            if (isOne && currentSubject) {
+            } else if (!currentSubject) {
+                currentSubject = isEnglishGrammar ?
+                'GENERAL GRAMMAR' : 'General';
+            }
+            let questionLines = [lines[i]];
+            i++;
+            while (i < lines.length) {
+                while (i < lines.length && !lines[i].trim()) i++;
+                if (i >= lines.length) break;
+                const nextTrim = lines[i].trim();
+                if (optRe.test(nextTrim)) break;
+                questionLines.push(lines[i]);
+                i++;
+            }
+            let opts = [];
+            while (i < lines.length) {
+                while (i < lines.length && !lines[i].trim()) i++;
+                if (i >= lines.length) break;
+                const optLine = lines[i].trim();
+                if (optRe.test(optLine)) {
+                    opts.push(lines[i]);
+                    i++;
+                } else {
+                    break;
+                }
+            }
+            let ans = null;
+            while (i < lines.length && !lines[i].trim()) i++;
+            if (i < lines.length) {
+                const ansLine = lines[i].trim();
+                if (ansRe.test(ansLine)) {
+                    ans = lines[i];
+                    i++;
+                }
+            }
+            if (opts.length >= 4 && ans && currentSubject) {
+                currentMcqs.push({
+                    question: questionLines.join('\n'),
+                    options: opts,
+                    answer: ans
+                });
+            }
+        }
+    }
+    if (currentSubject && currentMcqs.length > 0) {
+        subjects.set(currentSubject, currentMcqs);
+    }
+    return subjects;
+}
+
+function parseMCQs(allLines, lang) {
+    const questions = [];
+    const remainingLines = [];
+    let i = 0;
+    const numLines = allLines.length;
+    const optRe = lang === 'english' ?
+    /^([a-e]\)|\([1-5]\)|[1-5]\.)\s*/i : /^([କ-ଙ]\)|\([୧-୫]\)|[୧-୫]\.)\s*/;
+    const ansRe = lang === 'english' ? /^Answer:\s*([a-e]\)|\([1-5]\)|[1-5]\.)/i : /^ଉତ୍ତର:\s*([କ-ଙ]\)|\([୧-୫]\)|[୧-୫]\.)/;
+    while (i < numLines) {
+        while (i < numLines && !allLines[i].trim()) i++;
+        if (i >= numLines) break;
+        const line = allLines[i].trim();
+        const isOpt = optRe.test(line);
+        const isAns = ansRe.test(line);
+        let question = [];
+        
+        while (i < numLines) {
+            const l = allLines[i].trim();
+            const isOpt2 = optRe.test(l);
+            const isAns2 = ansRe.test(l);
+            if (isOpt2 || isAns2) {
+                break;
+            }
+            question.push(allLines[i]);
+            i++;
+        }
+        if (question.length === 0) {
+            remainingLines.push(allLines[i]);
+            i++;
+            continue;
+        }
+        let optStart = i;
+        let opts = [];
+        while (i < numLines) {
+            while (i < numLines && !allLines[i].trim()) i++;
+            if (i >= numLines) break;
+            const l = allLines[i].trim();
+            if (optRe.test(l)) {
+                opts.push(allLines[i]);
+                i++;
+            } else {
+                break;
+            }
+        }
+        if (opts.length < 4) {
+            remainingLines.push(...question);
+            remainingLines.push(...allLines.slice(optStart, i));
+            continue;
+        }
+        let ans = null;
+        while (i < numLines && !allLines[i].trim()) i++;
+        if (i < numLines) {
+            const l = allLines[i].trim();
+            if (ansRe.test(l)) {
+                ans = allLines[i];
+                i++;
+            } else {
+                remainingLines.push(...question);
+                remainingLines.push(...opts);
+                continue;
+            }
+        } else {
+            remainingLines.push(...question);
+            remainingLines.push(...opts);
+            continue;
+        }
+        questions.push({
+            question: question.join('\n'),
+            options: opts,
+            answer: ans
+        });
+    }
+    remainingLines.push(...allLines.slice(i));
+    return { questions, remainingLines };
+}
+
+function showResultsPopUp() {
+    stopSpeech();
+    const popup = document.getElementById('popup');
+    const popupContent = document.getElementById('popupContent');
+    const percentage = Math.round((currentScore / currentBatchSize) * 100);
+    popupContent.innerHTML = `
+        <h2>Results for Set ${currentBatch + 1}</h2>
+        <p>Score: ${currentScore} out of ${currentBatchSize}</p>
+        <p>Percentage: ${percentage}%</p>
+    `;
+    const buttonsDiv = popup.querySelector('.popup-buttons');
+    buttonsDiv.innerHTML = '<button class="popup-close" id="closeResults">Close</button>';
+    if (currentBatch + 1 < totalBatches) {
+        buttonsDiv.innerHTML += '<button id="nextSetBtn" class="button">Next Set</button>';
+        document.getElementById('nextSetBtn').addEventListener('click', () => {
+            loadSubjectMCQs(currentSectionIdx, currentChapterIdx, currentSubject, currentBatch + 1);
+            popup.classList.remove('visible');
+            setTimeout(() => { popup.style.display = 'none'; }, 400);
+        });
+    } else {
+        buttonsDiv.innerHTML += '<button id="finishBtn" class="button">Finish Subject</button>';
+        document.getElementById('finishBtn').addEventListener('click', () => {
+            loadSubjectSets(currentSectionIdx, currentChapterIdx, currentSubject);
+            popup.classList.remove('visible');
+            setTimeout(() => { popup.style.display = 'none'; }, 400);
+        });
+    }
+    document.getElementById('closeResults').addEventListener('click', () => {
+        popup.classList.remove('visible');
+        setTimeout(() => { popup.style.display = 'none'; }, 400);
+    });
+    popup.style.display = 'block';
+    setTimeout(() => { popup.classList.add('visible'); }, 10);
+}
+
+function loadSubjectSets(sectionIndex, chapterIndex, subjectName) {
+    currentSectionIdx = sectionIndex;
+    currentChapterIdx = chapterIndex;
+    currentSubject = subjectName;
+    const mcqs = currentSubjectsMap.get(subjectName);
+    totalBatches = Math.ceil(mcqs.length / 10);
+    let html = `<div class="section"><h1 class="section-title">${escapeHtml(subjectName)} - Question Sets</h1>`;
+    html += '<ul class="chapter-list">';
+    for (let b = 0; b < totalBatches; b++) {
+        html += `<li class="chapter-item" data-batch="${b}">${escapeHtml(`Set ${b + 1} of ${totalBatches}`)}</li>`;
+    }
+    html += '</ul>';
+    html += `<button class="home-button back-to-chapter" id="backToChapter" style="position: relative; bottom: auto; margin: 20px auto; display: block;">Back to Subjects</button></div>`;
+    const contentInner = document.getElementById('contentInner');
+    contentInner.innerHTML = html;
+    contentInner.classList.add('content-text');
+    contentInner.querySelectorAll('.chapter-item').forEach(li => {
+        li.addEventListener('click', (e) => {
+            const batch = parseInt(e.target.dataset.batch);
+            loadSubjectMCQs(sectionIndex, chapterIndex, subjectName, batch);
+        });
+    });
+    document.getElementById('backToChapter').addEventListener('click', () => {
+        loadContent(sectionIndex, chapterIndex);
+    });
+    sentences = [];
+    currentMcqIndex = 0;
+    updateTTSVisibility();
+}
+
+function loadSubjectMCQs(sectionIndex, chapterIndex, subjectName, batch = 0) {
+    currentSectionIdx = sectionIndex;
+    currentChapterIdx = chapterIndex;
+    currentSubject = subjectName;
+    currentBatch = batch;
+    const mcqs = currentSubjectsMap.get(subjectName);
+    const batchSize = 10;
+    const start = batch * batchSize;
+    const end = Math.min(start + batchSize, mcqs.length);
+    currentBatchSize = end - start;
+    const mcqsBatch = mcqs.slice(start, end);
+    const language = sections[sectionIndex].language;
+    currentScore = 0;
+    currentAttempted = 0;
+    let html = `<div class="section"><h1 class="section-title">${escapeHtml(subjectName)} - Set ${batch + 1} of ${Math.ceil(mcqs.length / 10)}</h1>`;
+    mcqsBatch.forEach(q => {
+        html += `<div class="mcq" data-answer="${escapeHtml(q.answer.replace(/"/g, '&quot;'))}">`;
+        html += `<div class="question-text">${escapeHtml(q.question).replace(/\n/g, '<br>')}</div>`;
+        html += '<div class="options">';
+        q.options.forEach((opt, oidx) => {
+            html += `<button class="option-btn" data-oidx="${oidx}">${escapeHtml(opt)}</button><br>`;
+        });
+        html += '</div>';
+        html += `<button class="skip-btn">Skip</button><br>`;
+        html += `<div class="answer" style="display:none;">${escapeHtml(q.answer)}</div>`;
+        html += `<div class="feedback" style="display:none;"></div>`;
+        html += '</div><hr style="margin:20px 0;">';
+    });
+    html += `<div id="progress" style="text-align:center; margin:20px 0; font-size:18px; font-weight:bold;">Attempted: <span id="attempted-count">0</span> / ${currentBatchSize} | Score: <span id="score-count">0</span></div>`;
+    html += `<button class="home-button back-to-sets" id="backToSets" style="position: relative; bottom: auto; margin: 20px auto; display: block;">Back to Sets</button></div>`;
+    const contentInner = document.getElementById('contentInner');
+    contentInner.innerHTML = html;
+    contentInner.classList.add('content-text');
+    setupMCQListeners(language);
+    sentences = [];
+    currentMcqIndex = 0;
+    document.getElementById('backToSets').addEventListener('click', () => {
+        loadSubjectSets(sectionIndex, chapterIndex, subjectName);
+    });
+    updateTTSVisibility();
+}
+
+function loadPageList(sectionIndex, chapterIndex, pages) {
+    const contentInner = document.getElementById('contentInner');
+    let html = `<div class="section"><h1 class="section-title">${escapeHtml(sections[sectionIndex].chapters[chapterIndex].name)} - Pages</h1>`;
+    html += '<ul class="chapter-list">';
+    subPages = pages;
+    pages.forEach((page, idx) => {
+        html += `<li class="chapter-item" data-page-index="${idx}">${escapeHtml(page.name)}</li>`;
+    });
+    html += '</ul>';
+    html += `<button class="home-button back-to-main" id="backToMain" style="position: relative; bottom: auto; margin: 20px auto; display: block;">Back to Main</button></div>`;
+    contentInner.innerHTML = html;
+    contentInner.classList.add('content-text');
+    contentInner.querySelectorAll('.chapter-item').forEach(li => {
+        li.addEventListener('click', (e) => {
+            const pageIdx = parseInt(e.target.dataset.pageIndex);
+            loadPageContent(sectionIndex, chapterIndex, pageIdx);
+        });
+    });
+    document.getElementById('backToMain').addEventListener('click', () => {
+        document.getElementById('homeButton').click();
+    });
+
+    if (sectionIndex === 3 && lastEnglishGrammarPageIndex >= 0) {
+        const pageItems = contentInner.querySelectorAll('.chapter-item');
+        const targetItem = pageItems[lastEnglishGrammarPageIndex];
+        if (targetItem) {
+            targetItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            targetItem.classList.add('highlight');
+            setTimeout(() => targetItem.classList.remove('highlight'), 2000);
+        }
+    }
+
+    sentences = [];
+    currentMcqIndex = 0;
+    updateTTSVisibility();
+}
+
+function loadPageContent(sectionIndex, chapterIndex, pageIdx) {
+    const language = sections[sectionIndex].language;
+    const page = subPages[pageIdx];
+    const allLines = page.content.split(/\r?\n/);
+    const contentInner = document.getElementById('contentInner');
+    if (sectionIndex === 3) {
+        lastEnglishGrammarPageIndex = pageIdx;
+    }
+
+    let html = `<div class="section"><h1 class="section-title">${escapeHtml(page.name)}</h1>`;
+    if (sectionIndex === 3) {
+        html += `<button id="toggleAnswersBtn" class="button" style="margin: 10px 0 15px 0; font-size: 18px;">Show Answers</button>`;
+    }
+    allLines.forEach((line, idx) => {
+        const trimmedLower = line.trim().toLowerCase();
+        const isAnswer = (sectionIndex === 3) && (
+            trimmedLower.startsWith('answer:') || trimmedLower.startsWith('ans:') ||
+            trimmedLower.startsWith('ans.') || trimmedLower.startsWith('solution:') ||
+            trimmedLower.includes('answer is') || trimmedLower.includes('correct answer')
+        );
+        const extraClass = isAnswer ? ' answer-line' : '';
+        const extraStyle = isAnswer ? ' style="display: none; color: #4caf50; font-weight: bold;"' : '';
+        html += `<span data-sentence-index="${idx}" class="${extraClass.trim()}"${extraStyle}>${escapeHtml(line)}</span><br>`;
+    });
+    sentences = allLines;
+    html += `<button class="home-button back-to-page-list" id="backToPageList" style="position: relative; bottom: auto; margin: 20px auto; display: block;">Back to Pages</button></div>`;
+    contentInner.innerHTML = html;
+    contentInner.classList.add('content-text');
+
+    if (sectionIndex === 3) {
+        const toggleBtn = document.getElementById('toggleAnswersBtn');
+        if (toggleBtn) {
+            let answersVisible = false;
+            toggleBtn.addEventListener('click', () => {
+                answersVisible = !answersVisible;
+                toggleBtn.textContent = answersVisible ? 'Hide Answers' : 'Show Answers';
+                const answerSpans = contentInner.querySelectorAll('span.answer-line');
+                answerSpans.forEach(span => {
+                    span.style.display = answersVisible ? 'inline' : 'none';
+                });
+            });
+        }
+    }
+
+    document.getElementById('backToPageList').addEventListener('click', () => {
+        loadPageList(sectionIndex, chapterIndex, subPages);
+    });
+    currentMcqIndex = 0;
+    updateTTSVisibility();
+}
+
+function showProgress(message, percentage) {
+    const progressContainer = document.getElementById('progress-container');
+    const progressFill = document.getElementById('progress-fill');
+    const progressText = document.getElementById('progress-text');
+    progressContainer.classList.add('visible');
+    progressFill.style.width = `${percentage}%`;
+    progressText.textContent = `${message} (${percentage}%)`;
+    if (percentage === 100) {
+        setTimeout(() => {
+            progressContainer.classList.remove('visible');
+        }, 1000);
+    }
+}
+
+function hideProgress() {
+    document.getElementById('progress-container').classList.remove('visible');
+}
+
+async function cacheFiles() {
+    try {
+        const cache = await caches.open(CACHE_NAME);
+        const cachedRequests = await cache.keys();
+        const cachedUrls = cachedRequests.map(req => req.url);
+        const filesToFetch = STATIC_ASSETS.filter(url => !cachedUrls.includes(url));
+        if (filesToFetch.length > 0) {
+            showProgress('Caching resources', 0);
+            const totalFiles = filesToFetch.length;
+            let loadedFiles = 0;
+
+            for (const file of filesToFetch) {
+                try {
+                    const response = await fetch(file, { cache: 'no-cache' });
+                    if (!response.ok) throw new Error(`Failed to fetch ${file}`);
+                    await cache.put(file, response.clone());
+                    loadedFiles++;
+                    showProgress('Caching resources', Math.round((loadedFiles / totalFiles) * 100));
+                } catch (error) {
+                    console.error(`Error caching ${file}:`, error);
+                }
+            }
+            hideProgress();
+            localStorage.setItem('cachePopulated', 'true');
+        }
+
+        await cacheDictionaryImages();
+    } catch (error) {
+        console.error('Error opening cache:', error);
+        hideProgress();
+    }
+}
+
+async function cacheDictionaryImages() {
+    try {
+        const cache = await caches.open(CACHE_NAME);
+        const imageUrls = [];
+        const customWords = JSON.parse(localStorage.getItem('customWords') || '[]');
+        customWords.forEach(word => {
+            if (word.image && !word.image.startsWith('data:')) {
+                imageUrls.push(word.image);
+            }
+        });
+        if (dbEnglishHindi) {
+            const stmt = dbEnglishHindi.prepare("SELECT image FROM dictionary WHERE image IS NOT NULL");
+            while (stmt.step()) {
+                const row = stmt.getAsObject();
+                if (row.image) {
+                    imageUrls.push(row.image);
+                }
+            }
+            stmt.free();
+        }
+
+        const cachedRequests = await cache.keys();
+        const cachedUrls = cachedRequests.map(req => req.url);
+        const imagesToFetch = [...new Set(imageUrls)].filter(url => !cachedUrls.includes(url));
+
+        if (imagesToFetch.length > 0) {
+            showProgress('Caching dictionary images', 0);
+            const totalImages = imagesToFetch.length;
+            let loadedImages = 0;
+
+            for (const imageUrl of imagesToFetch) {
+                try {
+                    const response = await fetch(imageUrl, { cache: 'no-cache' });
+                    if (!response.ok) throw new Error(`Failed to fetch image ${imageUrl}`);
+                    await cache.put(imageUrl, response.clone());
+                    loadedImages++;
+                    showProgress('Caching dictionary images', Math.round((loadedImages / totalImages) * 100));
+                } catch (error) {
+                    console.error(`Error caching image ${imageUrl}:`, error);
+                }
+            }
+            hideProgress();
+        }
+    } catch (error) {
+        console.error('Error caching dictionary images:', error);
+        hideProgress();
+    }
+}
+
+async function loadResource(url, bypassCache = false) {
+    try {
+        const cache = await caches.open(CACHE_NAME);
+        const cachedResponse = await cache.match(url);
+        if (cachedResponse && !bypassCache) {
+            return cachedResponse;
+        }
+        const response = await fetch(url, { cache: 'no-cache' });
+        if (!response.ok) throw new Error(`Failed to fetch ${url}`);
+        await cache.put(url, response.clone());
+        return response;
+    } catch (error) {
+        console.error(`Error loading ${url}:`, error);
+        document.getElementById('contentInner').innerHTML = '<p>Offline mode: Resource not available. Please connect to the internet to cache resources.</p>';
+        return null;
+    }
+}
+
+async function loadImage(url) {
+    try {
+        const cache = await caches.open(CACHE_NAME);
+        const cachedResponse = await cache.match(url);
+        if (cachedResponse) {
+            const blob = await cachedResponse.blob();
+            return URL.createObjectURL(blob);
+        }
+        try {
+            const response = await fetch(url, { cache: 'no-cache' });
+            if (!response.ok) throw new Error(`Failed to fetch image ${url}`);
+            await cache.put(url, response.clone());
+            const blob = await response.blob();
+            return URL.createObjectURL(blob);
+        } catch (fetchError) {
+            console.error(`Error fetching image ${url}:`, fetchError);
+            return null;
+        }
+    } catch (error) {
+        console.error(`Error loading image ${url}:`, error);
+        return null;
+    }
+}
+
+async function initDatabases() {
+    try {
+        const SQL = await initSqlJs({
+            locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${file}`
+        });
+        const loadDatabase = async (url) => {
+            const response = await loadResource(url);
+            if (!response) throw new Error(`Failed to load ${url}`);
+            const arrayBuffer = await response.arrayBuffer();
+            const decompressed = pako.ungzip(new Uint8Array(arrayBuffer));
+            return new SQL.Database(decompressed);
+        };
+
+        showProgress('Loading dictionaries', 0);
+        dbEnglishOdia = await loadDatabase(dbFiles.english_odia);
+        showProgress('Loading dictionaries', 50);
+        dbEnglishHindi = await loadDatabase(dbFiles.english_hindi);
+        showProgress('Loading dictionaries', 100);
+        hideProgress();
+    } catch (error) {
+        console.error('Error loading databases:', error);
+        document.getElementById('contentInner').innerHTML = '<p>Offline mode: Dictionaries not available. Please connect to the internet to cache dictionaries.</p>';
+        hideProgress();
+    }
+}
+
+function trimInput(input) {
+    return input.trim().toLowerCase();
+}
+
+function filterTextByLanguage(text, lang) {
+    if (typeof text !== 'string' || typeof lang !== 'string') {
+        return '';
+    }
+    const languagePatterns = {
+        or: /[\u0B00-\u0B7F\,.":;!?()\0-9 ]+/g,
+        hi: /[\u0900-\u097F]+/g,
+        en: /[A-Za-z]+/g
+    };
+    const langKey = lang.toLowerCase().slice(0, 2);
+    if (!languagePatterns[langKey]) {
+        return '';
+    }
+    const matches = text.match(languagePatterns[langKey]) || [];
+    return matches.join(' ').trim();
+}
+
+function getDeletedImages() {
+    return JSON.parse(localStorage.getItem('deletedImages') || '[]');
+}
+
+function saveDeletedImage(imageUrl) {
+    const deletedImages = getDeletedImages();
+    if (!deletedImages.includes(imageUrl)) {
+        deletedImages.push(imageUrl);
+        localStorage.setItem('deletedImages', JSON.stringify(deletedImages));
+    }
+}
+
+function removeDeletedImage(imageUrl) {
+    const deletedImages = getDeletedImages();
+    const updatedImages = deletedImages.filter(url => url !== imageUrl);
+    localStorage.setItem('deletedImages', JSON.stringify(updatedImages));
+}
+
+function getDictionaryTextToSpeak(resultsElement) {
+    const tempDiv = document.createElement('div');
+    resultsElement.querySelectorAll('.result-item').forEach(item => {
+        const textDiv = item.querySelector('.result-text');
+        if (textDiv) {
+            const clone = textDiv.cloneNode(true);
+            tempDiv.appendChild(clone);
+        }
+    });
+    return tempDiv.textContent.trim();
+}
+
+function mergeResults(results) {
+    const merged = [];
+    const seen = new Map();
+    results.forEach(result => {
+        const key = (result.English || '').toLowerCase().trim();
+        if (!seen.has(key)) {
+            seen.set(key, result);
+            merged.push(result);
+        } else {
+            const existing = seen.get(key);
+            Object.assign(existing, result);
+        }
+    });
+    return merged;
+}
+
+async function searchWord(word, targetElement, suggestionsElement = null, isDictionary = false) {
+    const trimmedWord = trimInput(word);
+    if (!trimmedWord) {
+        targetElement.innerHTML = '';
+        if (suggestionsElement) suggestionsElement.innerHTML = '';
+        if (isDictionary) {
+            document.getElementById('dictionarySpeakButton').disabled = true;
+            document.querySelector('.dictionary-form').style.display = 'none';
+        }
+        return;
+    }
+    let results = [];
+    let suggestions = [];
+    const deletedImages = getDeletedImages();
+
+    const customWords = JSON.parse(localStorage.getItem('customWords') || '[]');
+    const customMatches = customWords.filter(w => 
+        w.English.toLowerCase() === trimmedWord || 
+        (w.odia && w.odia.toLowerCase() === trimmedWord) || 
+        (w.hindi && w.hindi.toLowerCase() === trimmedWord)
+    );
+    results.push(...customMatches);
+
+    try {
+        if (dbEnglishOdia) {
+            const stmtEnglishOdia = dbEnglishOdia.prepare("SELECT English, odia FROM dictionary WHERE English LIKE ? OR odia LIKE ?");
+            stmtEnglishOdia.bind([trimmedWord, trimmedWord]);
+            while (stmtEnglishOdia.step()) {
+                const row = stmtEnglishOdia.getAsObject();
+                results.push({ English: row.English, odia: row.odia });
+            }
+            stmtEnglishOdia.free();
+        }
+
+        if (dbEnglishHindi) {
+            const stmtEnglishHindi = dbEnglishHindi.prepare("SELECT English, hindi, image FROM dictionary WHERE English LIKE ? OR hindi LIKE ?");
+            stmtEnglishHindi.bind([trimmedWord, trimmedWord]);
+            while (stmtEnglishHindi.step()) {
+                const row = stmtEnglishHindi.getAsObject();
+                results.push({ English: row.English, hindi: row.hindi, image: row.image });
+            }
+            stmtEnglishHindi.free();
+        }
+
+        const mergedResults = mergeResults(results);
+        if (suggestionsElement) {
+            if (dbEnglishOdia) {
+                const suggestionStmtEnglishOdia = dbEnglishOdia.prepare("SELECT English, odia FROM dictionary WHERE English LIKE ? OR odia LIKE ? LIMIT 5");
+                suggestionStmtEnglishOdia.bind([`${trimmedWord}%`, `${trimmedWord}%`]);
+                while (suggestionStmtEnglishOdia.step()) {
+                    const row = suggestionStmtEnglishOdia.getAsObject();
+                    suggestions.push({ English: row.English, odia: row.odia });
+                }
+                suggestionStmtEnglishOdia.free();
+            }
+
+            if (dbEnglishHindi) {
+                const suggestionStmtEnglishHindi = dbEnglishHindi.prepare("SELECT English, hindi, image FROM dictionary WHERE English LIKE ? OR hindi LIKE ? LIMIT 5");
+                suggestionStmtEnglishHindi.bind([`${trimmedWord}%`, `${trimmedWord}%`]);
+                while (suggestionStmtEnglishHindi.step()) {
+                    const row = suggestionStmtEnglishHindi.getAsObject();
+                    suggestions.push({ English: row.English, hindi: row.hindi, image: row.image });
+                }
+                suggestionStmtEnglishHindi.free();
+            }
+
+            const mergedSuggestions = mergeResults(suggestions);
+            let suggestionsHtml = '<ul>';
+            mergedSuggestions.forEach(sugg => {
+                const english = sugg.English || '';
+                const odia = sugg.odia || '';
+                const hindi = sugg.hindi || '';
+                suggestionsHtml += `<li data-english="${escapeHtml(english)}" data-odia="${escapeHtml(odia)}" data-hindi="${escapeHtml(hindi)}">${escapeHtml(english ? english : (odia ? odia : hindi))}</li>`;
+            });
+            suggestionsHtml += '</ul>';
+            suggestionsElement.innerHTML = suggestionsHtml;
+        }
+
+        let html = '';
+        mergedResults.forEach(result => {
+            html += '<div class="result-item">';
+            html += '<div class="result-text">';
+            if (result.English) html += `<strong>English:</strong> ${escapeHtml(result.English)}<br>`;
+            if (result.odia) html += `<strong>Odia:</strong> ${escapeHtml(result.odia)}<br>`;
+            if (result.hindi) html += `<strong>Hindi:</strong> ${escapeHtml(result.hindi)}<br>`;
+            html += '</div>';
+            if (result.image && !deletedImages.includes(result.image)) {
+                html += '<div class="image-container">';
+                if (result.image.startsWith('data:')) {
+                    html += `<img src="${result.image}" alt="Image for ${escapeHtml(result.English || result.odia || result.hindi)}" loading="lazy">`;
+                } else {
+                    loadImage(result.image).then(imageSrc => {
+                        if (imageSrc) {
+                            const imgElement = targetElement.querySelector(`[data-image-placeholder="${result.image}"]`);
+                            if (imgElement) {
+                                imgElement.src = imageSrc;
+                                imgElement.alt = `Image for ${escapeHtml(result.English || result.odia || result.hindi)}`;
+                            }
+                        }
+                    });
+                    html += `<img data-image-placeholder="${result.image}" src="" loading="lazy">`;
+                }
+                html += '</div>';
+                html += '<div class="image-controls">';
+                html += `<button class="delete-button" data-image="${result.image}" data-word="${escapeHtml(result.English || result.odia || result.hindi)}">Delete</button>`;
+                html += `<button class="restore-button" data-image="${result.image}" data-word="${escapeHtml(result.English || result.odia || result.hindi)}" disabled>Restore</button>`;
+                html += '</div>';
+            } else if (deletedImages.includes(result.image)) {
+                html += '<div class="image-container"><p>Image hidden</p></div>';
+                html += '<div class="image-controls">';
+                html += `<button class="delete-button" data-image="${result.image}" data-word="${escapeHtml(result.English || result.odia || result.hindi)}" disabled>Hidden</button>`;
+                html += `<button class="restore-button" data-image="${result.image}" data-word="${escapeHtml(result.English || result.odia || result.hindi)}">Restore</button>`;
+                html += '</div>';
+            }
+            html += '</div>';
+        });
+        targetElement.innerHTML = html;
+        setupImageControlListeners(targetElement);
+        if (mergedResults.length === 0 && isDictionary) {
+            document.querySelector('.dictionary-form').style.display = 'block';
+        } else if (isDictionary) {
+            document.getElementById('dictionarySpeakButton').disabled = false;
+            document.querySelector('.dictionary-form').style.display = 'none';
+        }
+    } catch (error) {
+        console.error('Error searching word:', error);
+        targetElement.innerHTML = '<div class="result-item"><div class="result-text">Error searching word. Please try again.</div></div>';
+        if (isDictionary) {
+            document.getElementById('dictionarySpeakButton').disabled = true;
+            document.querySelector('.dictionary-form').style.display = 'none';
+        }
+    }
+}
+
+function setupImageControlListeners(targetElement) {
+    targetElement.querySelectorAll('.delete-button').forEach(button => {
+        button.addEventListener('click', () => {
+            const imageUrl = button.getAttribute('data-image');
+            const word = button.getAttribute('data-word');
+            const controls = button.closest('.image-controls');
+            const container = controls.previousElementSibling;
+            saveDeletedImage(imageUrl);
+            container.querySelector('img')?.remove();
+            let p = container.querySelector('p');
+            if (!p) {
+                p = document.createElement('p');
+                container.appendChild(p);
+            }
+            p.textContent = 'Image hidden';
+            button.textContent = 'Hidden';
+            button.disabled = true;
+            controls.querySelector('.restore-button').disabled = false;
+        });
+    });
+    targetElement.querySelectorAll('.restore-button').forEach(button => {
+        button.addEventListener('click', async () => {
+            const imageUrl = button.getAttribute('data-image');
+            const word = button.getAttribute('data-word');
+            const password = prompt('Enter the word to restore the image:');
+            if (password && password.toLowerCase() === word.toLowerCase()) {
+                removeDeletedImage(imageUrl);
+                const controls = button.closest('.image-controls');
+                const container = controls.previousElementSibling;
+                container.querySelector('p')?.remove();
+                let imageSrc;
+                if (imageUrl.startsWith('data:')) {
+                    imageSrc = imageUrl;
+                } else {
+                    imageSrc = await loadImage(imageUrl);
+                }
+                if (imageSrc) {
+                    const img = document.createElement('img');
+                    img.src = imageSrc;
+                    img.alt = `Restored image for ${word}`;
+                    img.loading = 'lazy';
+                    container.appendChild(img);
+                    controls.querySelector('.restore-button').disabled = true;
+                    controls.querySelector('.delete-button').disabled = false;
+                    controls.querySelector('.delete-button').textContent = 'Delete';
+                } else {
+                    alert('Image not available offline.');
+                }
+            } else {
+                alert('Incorrect password. Please enter the correct word.');
+            }
+        });
+    });
+}
+
+function getFirstOdiaWord() {
+    try {
+        if (!dbEnglishOdia) return null;
+        const stmt = dbEnglishOdia.prepare("SELECT odia FROM dictionary ORDER BY odia ASC LIMIT 1");
+        if (stmt.step()) {
+            const row = stmt.getAsObject();
+            stmt.free();
+            return row.odia;
+        }
+        stmt.free();
+        return null;
+    } catch (error) {
+        console.error('Error fetching first Odia word:', error);
+        return null;
+    }
+}
+
+async function saveCustomWord(english, odia, hindi, imageFile) {
+    const customWords = JSON.parse(localStorage.getItem('customWords') || '[]');
+    const newWord = { English: english, odia, hindi };
+    if (imageFile) {
+        const reader = new FileReader();
+        return new Promise((resolve) => {
+            reader.onload = (e) => {
+                newWord.image = e.target.result;
+                if (!customWords.some(w => w.English.toLowerCase() === english.toLowerCase())) {
+                    customWords.push(newWord);
+                    localStorage.setItem('customWords', JSON.stringify(customWords));
+                    resolve(true);
+                } else {
+                    resolve(false);
+                }
+            };
+            reader.onerror = () => resolve(false);
+            reader.readAsDataURL(imageFile);
+        });
+    } else {
+        if (!customWords.some(w => w.English.toLowerCase() === english.toLowerCase())) {
+            customWords.push(newWord);
+            localStorage.setItem('customWords', JSON.stringify(customWords));
+            return true;
+        }
+        return false;
+    }
+}
+
+function setupMCQListeners(lang) {
+    document.querySelectorAll('.option-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const mcqDiv = this.closest('.mcq');
+            const options = mcqDiv.querySelectorAll('.option-btn');
+            const answerDiv = mcqDiv.querySelector('.answer');
+            const feedbackDiv = mcqDiv.querySelector('.feedback');
+            const skipBtn = mcqDiv.querySelector('.skip-btn');
+            options.forEach(b => b.disabled = true);
+            skipBtn.disabled = true;
+            const ansStr = mcqDiv.dataset.answer;
+            const labelRe = lang === 'english' ? /Answer:\s*(\(?[a-e1-5]\)?\.?)/i : /ଉତ୍ତର:\s*(\(?[କ-ଙ୧-୫]\)?\.?)/;
+            const match = ansStr.match(labelRe);
+            const correctLabel = match ? match[1] : null;
+            if (!correctLabel) return;
+            let correctIdx = -1;
+            options.forEach((b, idx) => {
+                const optText = b.textContent.trim();
+                const optMatch = optText.match(lang === 'english' ?
+                /^(\(?[a-e1-5]\)?\.?)/ : /^(\(?[କ-ଙ୧-୫]\)?\.?)/);
+                const optLabel = optMatch ? optMatch[1] : '';
+                if (optLabel === correctLabel) {
+                    correctIdx = idx;
+                }
+            });
+            const myIdx = parseInt(this.dataset.oidx);
+            let msg, myColor, correctColor = '#4caf50';
+            if (myIdx === correctIdx) {
+                currentScore++;
+                msg = 'Yes, correct!';
+                myColor = '#4caf50';
+            } else {
+                msg = 'Sorry, it\'s wrong';
+                myColor = '#f44336';
+                const correctBtn = Array.from(options)[correctIdx];
+                if (correctBtn) {
+                    correctBtn.style.backgroundColor = correctColor;
+                    correctBtn.style.color = 'white';
+                }
+            }
+            this.style.backgroundColor = myColor;
+            this.style.color = 'white';
+            feedbackDiv.textContent = msg;
+            feedbackDiv.style.display = 'block';
+            feedbackDiv.style.cssText = `font-weight: bold; color: ${myColor === '#4caf50' ?
+            '#2e7d32' : '#d32f2f'}; margin: 10px 0; padding: 5px;`;
+            answerDiv.style.display = 'block';
+            speakFeedback(msg);
+            currentAttempted++;
+            document.getElementById('attempted-count').textContent = currentAttempted;
+            document.getElementById('score-count').textContent = currentScore;
+            if (currentAttempted === currentBatchSize) {
+                setTimeout(() => showResultsPopUp(), 1000);
+            }
+        });
+    });
+    document.querySelectorAll('.skip-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const mcqDiv = this.closest('.mcq');
+            const options = mcqDiv.querySelectorAll('.option-btn');
+            const answerDiv = mcqDiv.querySelector('.answer');
+            const feedbackDiv = mcqDiv.querySelector('.feedback');
+            options.forEach(b => b.disabled = true);
+            this.disabled = true;
+            this.style.backgroundColor = '#ccc';
+            feedbackDiv.textContent = 'Skipped';
+            feedbackDiv.style.color = '#ff9800';
+            feedbackDiv.style.display = 'block';
+            answerDiv.style.display = 'block';
+            currentAttempted++;
+            document.getElementById('attempted-count').textContent = currentAttempted;
+            document.getElementById('score-count').textContent = currentScore;
+            if (currentAttempted === currentBatchSize) {
+                setTimeout(() => showResultsPopUp(), 1000);
+            }
+        });
+    });
+}
+
+function speakFeedback(msg) {
+    if (isReadingAloud && isMCQContent()) return;
+    // Suppress auto reading overlapping feedback
+    if (!isTTSSupported || !defaultEnglishVoice) return;
+    const utterance = new SpeechSynthesisUtterance(msg);
+    utterance.voice = defaultEnglishVoice;
+    utterance.lang = 'en-US';
+    utterance.rate = 0.8;
+    utterance.pitch = 1.0;
+    utterance.volume = 1.0;
+    window.speechSynthesis.speak(utterance);
+}
+
+function isMCQContent() {
+    return document.getElementById('contentInner').querySelector('.mcq') !== null;
+}
+
+function updateTTSVisibility() {
+    const showTTS = isTTSSupported && (sentences.length > 0 || isMCQContent());
+    document.getElementById('voiceButton').style.display = showTTS ?
+    'inline-block' : 'none';
+    document.getElementById('stopButton').style.display = showTTS ? 'inline-block' : 'none';
+    document.getElementById('voiceButton').disabled = !showTTS;
+    document.getElementById('stopButton').disabled = !showTTS;
+    document.getElementById('processing-status').textContent = showTTS ?
+    '' : (sentences.length === 0 && !isMCQContent() ? 'No text to read' : 'Text-to-speech is not supported in this browser.');
+}
+
+async function handleFileUpload(event) {
+    const files = Array.from(event.target.files);
+    if (!files.length) return;
+    const contentInner = document.getElementById('contentInner');
+    const chapterContainer = document.getElementById('chapterContainer');
+    const contentArea = document.getElementById('contentArea');
+    const processingStatus = document.getElementById('processing-status');
+
+    stopSpeech();
+    contentInner.innerHTML = '';
+    lastTappedFile = files[0].name;
+    lastTappedSentenceIndex = -1;
+    sentences = [];
+    currentMcqIndex = 0;
+
+    const pdfFiles = files.filter(f => f.name.endsWith('.pdf'));
+    const textFiles = files.filter(f => f.name.endsWith('.txt') || f.name.endsWith('.html'));
+    let allText = '';
+    try {
+        if (pdfFiles.length > 0) {
+            showProgress('Processing PDF files', 0);
+            let totalText = '';
+            for (let i = 0; i < pdfFiles.length; i++) {
+                const file = pdfFiles[i];
+                const arrayBuffer = await file.arrayBuffer();
+                const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                let text = '';
+                for (let j = 1; j <= pdf.numPages; j++) {
+                    const page = await pdf.getPage(j);
+                    const textContent = await page.getTextContent();
+                    text += textContent.items.map(item => item.str).join(' ') + '\n';
+                    showProgress('Processing PDF files', Math.round(((j / pdf.numPages) * (100 / pdfFiles.length)) + (i * (100 / pdfFiles.length))));
+                }
+                totalText += text + '\n';
+            }
+            const allLines = totalText.split(/\r?\n/);
+            const language = 'english';
+            const {questions, remainingLines} = parseMCQs(allLines, language);
+            let html = '';
+            questions.forEach(q => {
+                html += `<div class="mcq" data-answer="${escapeHtml(q.answer.replace(/"/g, '&quot;'))}">`;
+                html += `<div class="question-text">${escapeHtml(q.question).replace(/\n/g, '<br>')}</div>`;
+                html += '<div class="options">';
+                q.options.forEach((opt, oidx) => {
+                    html += `<button class="option-btn" data-oidx="${oidx}">${escapeHtml(opt)}</button><br>`;
+                });
+                html += '</div>';
+                html += `<button class="skip-btn">Skip</button><br>`;
+                html += `<div class="answer" style="display:none;background:#e3f2fd;padding:10px;margin:10px 0;border-left:4px solid #2196f3;">${escapeHtml(q.answer)}</div>`;
+                html += `<div class="feedback" style="display:none;"></div>`;
+                html += '</div><hr style="margin:20px 0;">';
+            });
+            remainingLines.forEach((line) => {
+                html += `<span>${escapeHtml(line)}</span><br>`;
+            });
+            contentInner.innerHTML += html;
+            contentInner.classList.add('content-text');
+            if (questions.length > 0) {
+                setupMCQListeners(language);
+            } else {
+                sentences = remainingLines;
+            }
+            hideProgress();
+        }
+        if (textFiles.length > 0) {
+            showProgress('Processing text/html files', 0);
+            for (let i = 0; i < textFiles.length; i++) {
+                const file = textFiles[i];
+                let fileHtml = '';
+                if (file.name.endsWith('.txt')) {
+                    const text = await file.text();
+                    allText += text + '\n';
+                    const allLines = text.split(/\r?\n/);
+                    const language = 'english';
+                    const subjects = parseChapterToSubjects(allLines, language, file.name);
+                    if (subjects.size > 0) {
+                        currentSubjectsMap = subjects;
+                        fileHtml += `<div class="section"><h1 class="section-title">Subjects</h1>`;
+                        fileHtml += '<ul class="chapter-list">';
+                        for (let [subjectName, mcqsList] of subjects) {
+                            if (mcqsList.length > 0) {
+                                fileHtml += `<li class="chapter-item" data-subject="${escapeHtml(subjectName)}">${escapeHtml(subjectName)}</li>`;
+                            }
+                        }
+                        fileHtml += '</ul></div>';
+                        contentInner.innerHTML += fileHtml;
+                        contentInner.querySelectorAll('.chapter-item').forEach(li => {
+                            li.addEventListener('click', (e) => {
+                                const subject = e.target.dataset.subject;
+                                loadSubjectSets(0, 0, subject);
+                            });
+                        });
+                        contentInner.classList.add('content-text');
+                        sentences = [];
+                    } else {
+                        const {questions, remainingLines} = parseMCQs(allLines, language);
+                        if (questions.length > 0) {
+                            questions.forEach(q => {
+                                fileHtml += `<div class="mcq" data-answer="${escapeHtml(q.answer.replace(/"/g, '&quot;'))}">`;
+                                fileHtml += `<div class="question-text">${escapeHtml(q.question).replace(/\n/g, '<br>')}</div>`;
+                                fileHtml += '<div class="options">';
+                                q.options.forEach((opt, oidx) => {
+                                    fileHtml += `<button class="option-btn" data-oidx="${oidx}">${escapeHtml(opt)}</button><br>`;
+                                });
+                                fileHtml += '</div>';
+                                fileHtml += `<button class="skip-btn">Skip</button><br>`;
+                                fileHtml += `<div class="answer" style="display:none;background:#e3f2fd;padding:10px;margin:10px 0;border-left:4px solid #2196f3;">${escapeHtml(q.answer)}</div>`;
+                                fileHtml += `<div class="feedback" style="display:none;"></div>`;
+                                fileHtml += '</div><hr style="margin:20px 0;">';
+                            });
+                            remainingLines.forEach((line) => {
+                                fileHtml += `<span>${escapeHtml(line)}</span><br>`;
+                            });
+                            setupMCQListeners(language);
+                            sentences = [];
+                        } else {
+                            remainingLines.forEach((line, idx) => {
+                                fileHtml += `<span data-sentence-index="${sentences.length + idx}">${escapeHtml(line)}</span><br>`;
+                            });
+                            sentences = sentences.concat(remainingLines);
+                        }
+                        contentInner.innerHTML += fileHtml;
+                        contentInner.classList.add('content-text');
+                    }
+                } else if (file.name.endsWith('.html')) {
+                    const text = await file.text();
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = text;
+                    const processNode = (node) => {
+                        if (node.nodeType === 3) {
+                            const textContent = node.textContent;
+                            const words = textContent.split(/(\s+)/);
+                            const fragment = document.createDocumentFragment();
+                            const sentenceIndex = sentences.length;
+                            words.forEach(word => {
+                                if (word.match(/\s+/)) {
+                                    fragment.appendChild(document.createTextNode(word));
+                                } else if (word.match(/[A-Za-z\u0B00-\u0B7F]/)) {
+                                    const span = document.createElement('span');
+                                    const cleanWord = word.replace(/[^A-Za-z\u0B00-\u0B7F]/g, '');
+                                    span.setAttribute('data-word', cleanWord);
+                                    span.setAttribute('data-sentence-index', sentenceIndex);
+                                    span.textContent = word;
+                                    fragment.appendChild(span);
+                                } else {
+                                    fragment.appendChild(document.createTextNode(word));
+                                }
+                            });
+                            sentences.push(textContent.trim());
+                            node.parentNode.replaceChild(fragment, node);
+                        } else if (node.nodeType === 1) {
+                            node.childNodes.forEach(processNode);
+                        }
+                    };
+                    tempDiv.childNodes.forEach(processNode);
+                    contentInner.appendChild(tempDiv);
+                    contentInner.classList.remove('content-text');
+                }
+                showProgress('Processing text/html files', Math.round(((i + 1) / textFiles.length) * 100));
+            }
+            hideProgress();
+        }
+
+        const savedPosition = loadLastTappedPosition(lastTappedFile);
+        currentSentenceIndex = savedPosition ? savedPosition.sentenceIndex : -1;
+        lastTappedSentenceIndex = currentSentenceIndex;
+
+        contentArea.classList.add('active');
+        chapterContainer.classList.add('hidden');
+        processingStatus.textContent = '';
+
+        setupInteractionListeners();
+        updateTTSVisibility();
+    } catch (error) {
+        console.error('Error processing files:', error);
+        contentInner.innerHTML = '<p>Error: Failed to process files.</p>';
+        hideProgress();
+        processingStatus.textContent = 'Error processing files.';
+        updateTTSVisibility();
+    }
+}
+
+async function loadContent(sectionIndex, chapterIndex) {
+    const chapter = sections[sectionIndex].chapters[chapterIndex];
+    if (chapter.type === 'link') {
+        window.open(chapter.url, '_blank');
+        return;
+    }
+    const contentArea = document.getElementById('contentArea');
+    const contentInner = document.getElementById('contentInner');
+    const chapterContainer = document.getElementById('chapterContainer');
+    const processingStatus = document.getElementById('processing-status');
+    contentInner.innerHTML = '';
+    lastTappedFile = chapter.url;
+    lastTappedSentenceIndex = -1;
+    currentMcqIndex = 0;
+
+    const content = await loadResource(chapter.url);
+    if (!content) {
+        contentInner.innerHTML = '<p>Offline mode: Content not available. Please connect to the internet to cache content.</p>';
+        return;
+    }
+    const textContent = await content.text();
+    const tempDiv = document.createElement('div');
+    if (sectionIndex === 2) {
+        tempDiv.style.whiteSpace = 'pre';
+    } else {
+        tempDiv.style.whiteSpace = 'pre-wrap';
+    }
+    
+    if (chapter.type === 'html') {
+        tempDiv.innerHTML = textContent;
+        const processNode = (node) => {
+            if (node.nodeType === 3) {
+                const textContentNode = node.textContent;
+                const words = textContentNode.split(/(\s+)/);
+                const fragment = document.createDocumentFragment();
+                const sentenceIndex = sentences.length;
+                words.forEach(word => {
+                    if (word.match(/\s+/)) {
+                        fragment.appendChild(document.createTextNode(word));
+                    } else if (word.match(/[A-Za-z\u0B00-\u0B7F]/)) {
+                        const span = document.createElement('span');
+                        const cleanWord = word.replace(/[^A-Za-z\u0B00-\u0B7F]/g, '');
+                        span.setAttribute('data-word', cleanWord);
+                        span.setAttribute('data-sentence-index', sentenceIndex);
+                        span.textContent = word;
+                        fragment.appendChild(span);
+                    } else {
+                        fragment.appendChild(document.createTextNode(word));
+                    }
+                });
+                sentences.push(textContentNode.trim());
+                node.parentNode.replaceChild(fragment, node);
+            } else if (node.nodeType === 1) {
+                node.childNodes.forEach(processNode);
+            }
+        };
+        tempDiv.childNodes.forEach(processNode);
+        contentInner.appendChild(tempDiv);
+        contentInner.classList.remove('content-text');
+    } else if (chapter.type === 'text') {
+        if (chapter.name === 'GK Theory' || chapter.name === 'ଓଡ଼ିଆ GK Theory' || chapter.name === 'English Grammar') {
+            let pages = [];
+            if (chapter.name === 'English Grammar') {
+                const lines = textContent.split(/\r?\n/);
+                const pageSize = 30;
+                for (let i = 0; i < lines.length; i += pageSize) {
+                    const pageLines = lines.slice(i, i + pageSize);
+                    const pageName = `Page ${pages.length + 1} of ${Math.ceil(lines.length / pageSize)}`;
+                    pages.push({name: pageName, content: pageLines.join('\n')});
+                }
+            } else {
+                const regex = /###\s*(.*?)\s*###([\s\S]*?)(?=###|$)/g;
+                let match;
+                while ((match = regex.exec(textContent)) !== null) {
+                    pages.push({name: match[1].trim(), content: match[2].trim()});
+                }
+            }
+            if (pages.length === 0) {
+                pages = [{name: chapter.name, content: textContent}];
+            }
+            loadPageList(sectionIndex, chapterIndex, pages);
+        } else {
+            const allLines = textContent.split(/\r?\n/);
+            const language = sections[sectionIndex].language;
+            const subjects = parseChapterToSubjects(allLines, language, chapter.name);
+            currentSubjectsMap = subjects;
+            currentChapterName = chapter.name;
+            let html = `<div class="section"><h1 class="section-title">${escapeHtml(chapter.name)} - Subjects</h1>`;
+            html += '<ul class="chapter-list">';
+            let hasSubjects = false;
+            for (let [subjectName, mcqsList] of subjects) {
+                if (mcqsList.length > 0) {
+                    html += `<li class="chapter-item" data-subject="${escapeHtml(subjectName)}">${escapeHtml(subjectName)}</li>`;
+                    hasSubjects = true;
+                }
+            }
+            if (hasSubjects) {
+                html += '</ul></div>';
+                contentInner.innerHTML = html;
+                contentInner.classList.add('content-text');
+                contentInner.querySelectorAll('.chapter-item').forEach(li => {
+                    li.addEventListener('click', (e) => {
+                        const subject = e.target.dataset.subject;
+                        loadSubjectSets(sectionIndex, chapterIndex, subject);
+                    });
+                });
+                if (currentSubjectName) {
+                    const subjectLi = contentInner.querySelector(`[data-subject="${escapeHtml(currentSubjectName)}"]`);
+                    if (subjectLi) {
+                        subjectLi.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        subjectLi.classList.add('highlight');
+                        setTimeout(() => subjectLi.classList.remove('highlight'), 2000);
+                    }
+                    currentSubjectName = '';
+                }
+                sentences = [];
+            } else {
+                const {questions, remainingLines} = parseMCQs(allLines, language);
+                let mcqHtml = '';
+                questions.forEach(q => {
+                    mcqHtml += `<div class="mcq" data-answer="${escapeHtml(q.answer.replace(/"/g, '&quot;'))}">`;
+                    mcqHtml += `<div class="question-text">${escapeHtml(q.question).replace(/\n/g, '<br>')}</div>`;
+                    mcqHtml += '<div class="options">';
+                    q.options.forEach((opt, oidx) => {
+                        mcqHtml += `<button class="option-btn" data-oidx="${oidx}">${escapeHtml(opt)}</button><br>`;
+                    });
+                    mcqHtml += '</div>';
+                    mcqHtml += `<button class="skip-btn">Skip</button><br>`;
+                    mcqHtml += `<div class="answer" style="display:none;background:#e3f2fd;padding:10px;margin:10px 0;border-left:4px solid #2196f3;">${escapeHtml(q.answer)}</div>`;
+                    mcqHtml += `<div class="feedback" style="display:none;"></div>`;
+                    mcqHtml += '</div><hr style="margin:20px 0;">';
+                });
+               
+                let remainingHtml = '';
+                remainingLines.forEach((line, idx) => {
+                    if (questions.length > 0) {
+                        remainingHtml += `<span>${escapeHtml(line)}</span><br>`;
+                    } else {
+                        remainingHtml += `<span data-sentence-index="${idx}">${escapeHtml(line)}</span><br>`;
+                    }
+                });
+                html = mcqHtml + remainingHtml;
+                contentInner.innerHTML = html;
+                contentInner.classList.add('content-text');
+                if (questions.length > 0) {
+                    setupMCQListeners(language);
+                    sentences = [];
+                } else {
+                    sentences = remainingLines;
+                }
+            }
+        }
+    }
+
+    contentArea.classList.add('active');
+    chapterContainer.classList.add('hidden');
+    processingStatus.textContent = '';
+
+    const savedPosition = loadLastTappedPosition(chapter.url);
+    currentSentenceIndex = savedPosition ? savedPosition.sentenceIndex : -1;
+    lastTappedSentenceIndex = currentSentenceIndex;
+
+    setupInteractionListeners();
+    updateTTSVisibility();
+}
+
+function saveLastTappedPosition(fileKey, sentenceIndex, pageIndex) {
+    const positions = JSON.parse(localStorage.getItem('lastTappedPositions') || '{}');
+    positions[fileKey] = { sentenceIndex, pageIndex };
+    localStorage.setItem('lastTappedPositions', JSON.stringify(positions));
+}
+
+function loadLastTappedPosition(fileKey) {
+    const positions = JSON.parse(localStorage.getItem('lastTappedPositions') || '{}');
+    return positions[fileKey];
+}
+
+function clearLastTappedPosition(fileKey) {
+    const positions = JSON.parse(localStorage.getItem('lastTappedPositions') || '{}');
+    delete positions[fileKey];
+    localStorage.setItem('lastTappedPositions', JSON.stringify(positions));
+}
+
+function setupInteractionListeners() {
+    const contentInner = document.getElementById('contentInner');
+    contentInner.addEventListener('mouseup', handleTextSelection);
+    contentInner.addEventListener('touchend', handleTextSelection);
+}
+
+function handleTextSelection(event) {
+    if (!document.getElementById('contentArea').classList.contains('active')) return;
+    const selection = window.getSelection();
+    const selectedText = selection.toString().trim();
+    if (selectedText) {
+        const range = selection.getRangeAt(0);
+        const element = range.startContainer.parentElement.closest('span[data-sentence-index]');
+        if (element && element.hasAttribute('data-sentence-index')) {
+            const sentenceIndex = parseInt(element.getAttribute('data-sentence-index'), 10);
+            lastTappedSentenceIndex = sentenceIndex;
+            if (lastTappedFile) {
+                saveLastTappedPosition(lastTappedFile, lastTappedSentenceIndex, 0);
+            }
+        }
+
+        const words = selectedText.split(/\s+/).filter(word => word.match(/[A-Za-z\u0B00-\u0B7F]/));
+        if (words.length > 0) {
+            const word = words[0].replace(/[^A-Za-z\u0B00-\u0B7F]/g, '').trim();
+            showPopup(word);
+        }
+        selection.removeAllRanges();
+    }
+}
+
+async function showPopup(word = null) {
+    const popup = document.getElementById('popup');
+    const popupContent = document.getElementById('popupContent');
+    popupContent.innerHTML = '';
+    popup.style.display = 'block';
+
+    setTimeout(async () => {
+        popup.classList.add('visible');
+        
+        if (!word) {
+            const firstOdiaWord = await getFirstOdiaWord();
+            if (firstOdiaWord) {
+                word = firstOdiaWord;
+            } else {
+                popupContent.innerHTML = '<div class="result-item"><div class="result-text">No Odia words found in dictionary.</div></div>';
+                return;
+            }
+        }
+
+        const searchInput = document.createElement('input');
+        searchInput.type = 'text';
+        searchInput.className = 'dictionary-search';
+        searchInput.placeholder = 'Search word...';
+        searchInput.value = word;
+        popupContent.appendChild(searchInput);
+
+        const resultsElement = document.createElement('div');
+        resultsElement.className = 'dictionary-results';
+        resultsElement.id = 'popupResults';
+        popupContent.appendChild(resultsElement);
+
+        const speakButton = document.createElement('button');
+        speakButton.className = 'speak-button';
+        speakButton.id = 'popupSpeakButton';
+        speakButton.title = 'Speak Results';
+        speakButton.textContent = '🗣️';
+        speakButton.disabled = !isTTSSupported;
+        speakButton.style.display = isTTSSupported ? 'inline-block' : 'none';
+        popupContent.appendChild(speakButton);
+
+        const suggestionsElement = document.createElement('div');
+        suggestionsElement.className = 'dictionary-suggestions';
+        suggestionsElement.id = 'popupSuggestions';
+        popupContent.appendChild(suggestionsElement);
+        searchInput.addEventListener('input', () => {
+            clearTimeout(dictionaryTimeout);
+            resultsElement.innerHTML = '';
+            suggestionsElement.innerHTML = '';
+            speakButton.disabled = true;
+
+            const searchWordVal = searchInput.value;
+            if (searchWordVal.trim()) {
+                dictionaryTimeout = setTimeout(async () => {
+                    await searchWord(searchWordVal, resultsElement, suggestionsElement, false);
+                    setupSuggestionListeners(suggestionsElement, searchInput, resultsElement, speakButton);
+                    speakButton.disabled = !isTTSSupported || resultsElement.innerHTML === '';
+                }, 300);
+            }
+        });
+        if (isTTSSupported) {
+            speakButton.addEventListener('click', () => {
+                if (isDictionaryReading) {
+                    window.speechSynthesis.cancel();
+                    isDictionaryReading = false;
+                    speakButton.textContent = '🗣️';
+                    return;
+                }
+
+                const textToSpeak = getDictionaryTextToSpeak(resultsElement);
+                if (!textToSpeak) {
+                    return;
+                }
+
+                stopSpeech();
+                isDictionaryReading = true;
+                speakButton.textContent = '⏸️';
+                const voiceMap = {
+                    'hi': defaultHindiVoice,
+                    'or': defaultOdiaVoice,
+                    'en': defaultEnglishVoice
+                };
+                speechUtterances = [];
+                activeUtterances = 0;
+                let usedVoicesCount = 0;
+                ['hi', 'or', 'en'].forEach(langPrefix => {
+                    const filteredText = filterTextByLanguage(textToSpeak, langPrefix);
+                    if (filteredText) {
+                        const voice = voiceMap[langPrefix];
+                        if (voice) {
+                            const utterance = new SpeechSynthesisUtterance(filteredText);
+                            utterance.voice = voice;
+                            utterance.lang = voice.lang;
+                            utterance.rate = 0.7;
+                            utterance.pitch = 1.0;
+                            utterance.volume = 4.0;
+                            utterance.onend = () => {
+                                activeUtterances--;
+                                if (activeUtterances === 0) {
+                                    isDictionaryReading = false;
+                                    speakButton.textContent = '🗣️';
+                                }
+                            };
+                            speechUtterances.push(utterance);
+                            activeUtterances++;
+                            usedVoicesCount++;
+                        }
+                    }
+                });
+                if (activeUtterances > 0) {
+                    speechUtterances.forEach(utterance => window.speechSynthesis.speak(utterance));
+                } else {
+                    isDictionaryReading = false;
+                    speakButton.textContent = '🗣️';
+                }
+            });
+        }
+
+        await searchWord(word, resultsElement, suggestionsElement, false);
+        speakButton.disabled = !isTTSSupported || resultsElement.innerHTML === '';
+        setupSuggestionListeners(suggestionsElement, searchInput, resultsElement, speakButton);
+    }, 0);
+}
+
+function setupSuggestionListeners(suggestionsElement, searchInput, resultsElement, speakButton) {
+    suggestionsElement.querySelectorAll('li').forEach(li => {
+        li.addEventListener('click', async () => {
+            const english = li.getAttribute('data-english');
+            const odia = li.getAttribute('data-odia');
+            const hindi = li.getAttribute('data-hindi');
+            const selectedWord = english || odia || hindi;
+            if (selectedWord) {
+                searchInput.value = selectedWord;
+                suggestionsElement.innerHTML = '';
+                await searchWord(selectedWord, resultsElement, suggestionsElement, false);
+                speakButton.disabled = !isTTSSupported || resultsElement.innerHTML === '';
+                setupSuggestionListeners(suggestionsElement, searchInput, resultsElement, speakButton);
+            }
+        });
+    });
+}
+
+sections.forEach(section => {
+    const supportName = section.language === 'odia' ? '💲Donate💲' : '💲Donate💲';
+    section.chapters.unshift({
+        name: supportName,
+        type: "link",
+        url: "https://raw.githubusercontent.com/abhayattcc/lucentgkonline/refs/heads/lucentgkonline/AccountQRCodeState Bank of India - 5687_LIGHT_THEME.png"
+    });
+});
+const sectionsContainer = document.getElementById('sections');
+sections.forEach((section, sectionIndex) => {
+    const sectionDiv = document.createElement('div');
+    sectionDiv.className = 'section';
+    sectionDiv.id = `section-${sectionIndex}`;
+    const sectionTitle = document.createElement('h1');
+    sectionTitle.className = 'section-title';
+    sectionTitle.textContent = section.title;
+    sectionDiv.appendChild(sectionTitle);
+    const chapterList = document.createElement('ul');
+    chapterList.className = 'chapter-list';
+    section.chapters.forEach((chapter, chapterIndex) => {
+        const li = document.createElement('li');
+        li.className = 'chapter-item';
+        li.id = `chapter-${sectionIndex}-${chapterIndex}`;
+        li.textContent = chapter.name;
+        li.addEventListener('click', () => {
+            if (chapter.type === 'link') {
+                window.open(chapter.url, '_blank');
+            } else {
+                currentSectionIndex = sectionIndex;
+                currentChapterIndex = chapterIndex;
+                loadContent(sectionIndex, chapterIndex);
+            }
+        });
+        chapterList.appendChild(li);
+    });
+    sectionDiv.appendChild(chapterList);
+    sectionsContainer.appendChild(sectionDiv);
+});
+
+const fileUploadContainer = document.createElement('div');
+fileUploadContainer.className = 'file-upload';
+fileUploadContainer.innerHTML = '<input type="file" id="fileUpload" accept=".pdf,.txt,.html" multiple>';
+document.getElementById('chapterContainer').appendChild(fileUploadContainer);
+function populateVoiceList() {
+    if (!isTTSSupported) {
+        document.getElementById('voiceButton').style.display = 'none';
+        document.getElementById('stopButton').style.display = 'none';
+        document.getElementById('dictionarySpeakButton').style.display = 'none';
+        return;
+    }
+    voices = window.speechSynthesis.getVoices();
+    defaultEnglishVoice = voices.find(v => v.lang.startsWith('en') && v.name.includes('Google')) || voices.find(v => v.lang.startsWith('en'));
+    defaultHindiVoice = voices.find(v => v.lang.startsWith('hi') && v.name.includes('Google')) ||
+    voices.find(v => v.lang.startsWith('hi'));
+    defaultOdiaVoice = voices.find(v => v.lang.startsWith('or') && v.name.includes('Google')) || voices.find(v => v.lang.startsWith('or'));
+}
+
+function playSpeech() {
+    if (!isTTSSupported || (!isMCQContent() && sentences.length === 0)) {
+        updateTTSVisibility();
+        return;
+    }
+    if (isReadingAloud && isPaused) {
+        window.speechSynthesis.resume();
+        isPaused = false;
+        document.getElementById('voiceButton').textContent = '⏸️';
+        document.getElementById('processing-status').textContent = isMCQContent() ? 'Resuming MCQ reading...' : 'Resuming reading...';
+        return;
+    } else if (isReadingAloud) {
+        window.speechSynthesis.pause();
+        isPaused = true;
+        document.getElementById('voiceButton').textContent = '▶️';
+        document.getElementById('processing-status').textContent = isMCQContent() ? 'Paused MCQ reading' : 'Paused reading';
+        return;
+    }
+
+    stopSpeech();
+    isReadingAloud = true;
+    isPaused = false;
+    document.getElementById('voiceButton').textContent = '⏸️';
+
+    if (isMCQContent()) {
+        document.getElementById('processing-status').textContent = 'Reading MCQs...';
+        readNextMCQ();
+    } else {
+        currentSentenceIndex = lastTappedSentenceIndex >= 0 ?
+        lastTappedSentenceIndex : (currentSentenceIndex >= sentences.length - 1 ? 0 : currentSentenceIndex + 1);
+        document.getElementById('processing-status').textContent = 'Reading...';
+        readNextSentence();
+    }
+}
+
+// Function to handle speaking with a generic chainable callback
+function speakWithCallback(text, callback) {
+    if (!isReadingAloud) return;
+    const voiceMap = { 'hi': defaultHindiVoice, 'or': defaultOdiaVoice, 'en': defaultEnglishVoice };
+    speechUtterances = [];
+    activeUtterances = 0;
+    ['hi', 'or', 'en'].forEach(langPrefix => {
+        const filteredText = filterTextByLanguage(text, langPrefix);
+        if (filteredText) {
+            const voice = voiceMap[langPrefix];
+            if (voice) {
+                const utterance = new SpeechSynthesisUtterance(filteredText);
+                utterance.voice = voice;
+                utterance.lang = voice.lang;
+                utterance.rate = 0.7;
+                utterance.volume = 4.0;
+                utterance.onend = () => {
+                    activeUtterances--;
+                    if (activeUtterances === 0 && isReadingAloud) {
+                        setTimeout(callback, 500); // Slight delay for natural flow
+                    }
+                };
+                speechUtterances.push(utterance);
+                activeUtterances++;
+            }
+        }
+    });
+    if (activeUtterances > 0) {
+        speechUtterances.forEach(u => window.speechSynthesis.speak(u));
+    } else {
+        // Fallback if the text is pure symbols or no matching voice filter is caught
+        const fallbackUtterance = new SpeechSynthesisUtterance(text);
+        fallbackUtterance.voice = defaultEnglishVoice || defaultOdiaVoice;
+        fallbackUtterance.rate = 0.7;
+        fallbackUtterance.onend = () => { if (isReadingAloud) setTimeout(callback, 500); };
+        window.speechSynthesis.speak(fallbackUtterance);
+        speechUtterances.push(fallbackUtterance);
+    }
+}
+
+// Function to step through MCQs natively
+function readNextMCQ() {
+    const mcqs = document.querySelectorAll('.mcq');
+    if (currentMcqIndex >= mcqs.length || !isReadingAloud) {
+        stopSpeech();
+        return;
+    }
+
+    const mcqDiv = mcqs[currentMcqIndex];
+    mcqDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    const qDiv = mcqDiv.querySelector('.question-text');
+    const optsDiv = mcqDiv.querySelector('.options');
+    const ansDiv = mcqDiv.querySelector('.answer');
+    const optionsBtns = Array.from(mcqDiv.querySelectorAll('.option-btn'));
+
+    const qText = qDiv.textContent;
+    const optionsText = optionsBtns.map(btn => btn.textContent).join('. ');
+    // Match Correct Option
+    const ansStr = mcqDiv.dataset.answer || ansDiv.textContent;
+    let correctLabelMatch = ansStr.match(/Answer:\s*(\(?[a-eA-E1-5]\)?\.?)/i) || ansStr.match(/ଉତ୍ତର:\s*(\(?[କ-ଙ୧-୫]\)?\.?)/);
+    let correctLabel = correctLabelMatch ? correctLabelMatch[1] : null;
+
+    let correctIdx = -1;
+    optionsBtns.forEach((b, idx) => {
+        const optText = b.textContent.trim();
+        const optMatch = optText.match(/^(\(?[a-eA-E1-5]\)?\.?)/) || optText.match(/^(\(?[କ-ଙ୧-୫]\)?\.?)/);
+        const optLabel = optMatch ? optMatch[1] : '';
+        if (optLabel === correctLabel) correctIdx = idx;
+    });
+    if (correctIdx === -1) {
+        const ansClean = ansStr.replace(/Answer:|ଉତ୍ତର:/ig, '').trim();
+        correctIdx = optionsBtns.findIndex(b => b.textContent.includes(ansClean) || ansClean.includes(b.textContent));
+        if (correctIdx === -1) correctIdx = 0;
+        // Safe fallback
+    }
+
+    const correctBtn = optionsBtns[correctIdx];
+    const answerSpeechText = " " + correctBtn.textContent;
+
+    // Phase 1: Read Question (highlight)
+    qDiv.style.backgroundColor = '#ffff99';
+    speakWithCallback(qText, () => {
+        qDiv.style.backgroundColor = '';
+        if (!isReadingAloud) return;
+
+        // Phase 2: Read Options (highlight)
+        optsDiv.style.backgroundColor = '#e0f7fa';
+        speakWithCallback(" " + optionsText, () => {
+            optsDiv.style.backgroundColor = '';
+            if (!isReadingAloud) return;
+
+            
+            // Phase 3: Speak & Reveal Correct Answer
+            if (!correctBtn.disabled) correctBtn.click();
+            ansDiv.style.backgroundColor = '#c8e6c9';
+            
+            speakWithCallback(answerSpeechText, () => {
+                ansDiv.style.backgroundColor = '#e3f2fd'; // Reset to default blue
+               
+                if (!isReadingAloud) return;
+                
+                currentMcqIndex++;
+                readNextMCQ();
+            });
+        });
+    });
+}
+
+function readNextSentence() {
+    if (!isTTSSupported || isMCQContent() || sentences.length === 0) {
+        updateTTSVisibility();
+        return;
+    }
+    while (currentSentenceIndex < sentences.length && !sentences[currentSentenceIndex].trim()) {
+        currentSentenceIndex++;
+    }
+    if (currentSentenceIndex >= sentences.length || !isReadingAloud) {
+        stopSpeech();
+        if (currentSentenceIndex >= sentences.length && lastTappedFile) {
+            clearLastTappedPosition(lastTappedFile);
+            lastTappedSentenceIndex = -1;
+        }
+        return;
+    }
+    const text = sentences[currentSentenceIndex];
+    const sentenceSpans = document.getElementById('contentInner').querySelectorAll('span[data-sentence-index]');
+    sentenceSpans.forEach(span => span.classList.remove('highlight'));
+    const currentSpan = Array.from(sentenceSpans).find(span => parseInt(span.getAttribute('data-sentence-index')) === currentSentenceIndex);
+    if (currentSpan) {
+        currentSpan.classList.add('highlight');
+        const contentInner = document.getElementById('contentInner');
+        const spanRect = currentSpan.getBoundingClientRect();
+        const containerRect = contentInner.getBoundingClientRect();
+        contentInner.scrollTop += spanRect.top - containerRect.top - (containerRect.height / 2) + (spanRect.height / 2);
+    }
+    const voiceMap = { 
+        'hi': defaultHindiVoice,
+        'or': defaultOdiaVoice,
+        'en': defaultEnglishVoice
+    };
+    speechUtterances = [];
+    activeUtterances = 0;
+    let usedVoicesCount = 0;
+    ['hi', 'or', 'en'].forEach(langPrefix => {
+        const filteredText = filterTextByLanguage(text, langPrefix);
+        if (filteredText) {
+            const voice = voiceMap[langPrefix];
+            if (voice) {
+                const utterance = new SpeechSynthesisUtterance(filteredText);
+                utterance.voice = voice;
+                utterance.lang = voice.lang;
+                utterance.rate = 0.7;
+                utterance.pitch = 1.0;
+                utterance.volume = 4.0;
+                utterance.onend = () => {
+                    activeUtterances--;
+                    if (activeUtterances === 0 && isReadingAloud) {
+                        currentSentenceIndex++;
+                        if (lastTappedFile) {
+                            saveLastTappedPosition(lastTappedFile, currentSentenceIndex, 0);
+                        }
+                        readNextSentence();
+                    }
+                };
+                speechUtterances.push(utterance);
+                activeUtterances++;
+                usedVoicesCount++;
+            }
+        }
+    });
+    if (activeUtterances > 0) {
+        speechUtterances.forEach(utterance => window.speechSynthesis.speak(utterance));
+        document.getElementById('voiceButton').disabled = false;
+        document.getElementById('stopButton').disabled = false;
+        document.getElementById('processing-status').textContent = `Reading with ${usedVoicesCount} voice${usedVoicesCount > 1 ? 's' : ''}...`;
+    } else {
+        currentSentenceIndex++;
+        if (lastTappedFile) {
+            saveLastTappedPosition(lastTappedFile, currentSentenceIndex, 0);
+        }
+        readNextSentence();
+    }
+}
+
+function stopSpeech() {
+    if (isTTSSupported) {
+        window.speechSynthesis.cancel();
+    }
+    speechUtterances = [];
+    activeUtterances = 0;
+    isReadingAloud = false;
+    isPaused = false;
+    isDictionaryReading = false;
+    document.getElementById('voiceButton').textContent = '🗣️';
+    document.getElementById('stopButton').disabled = true;
+    document.getElementById('dictionarySpeakButton').textContent = '🗣️';
+    document.getElementById('dictionarySpeakButton').disabled = !isTTSSupported || document.getElementById('dictionaryResults').innerHTML === '';
+    // Cleanup highlighted sentence parts
+    const sentenceSpans = document.getElementById('contentInner').querySelectorAll('span[data-sentence-index]');
+    sentenceSpans.forEach(span => {
+        span.classList.remove('highlight');
+        span.style.display = 'inline';
+    });
+    // Cleanup MCQ manual highlights
+    document.querySelectorAll('.mcq .question-text, .mcq .options, .mcq .answer').forEach(el => {
+        if (el.classList.contains('answer')) {
+            el.style.backgroundColor = '#e3f2fd'; // Restore default answer styling
+        } else {
+            el.style.backgroundColor = '';
+        }
+    });
+    updateTTSVisibility();
+}
+
+function speakDictionaryResults(resultsId = 'dictionaryResults', speakButtonId = 'dictionarySpeakButton') {
+    if (!isTTSSupported) {
+        document.getElementById('processing-status').textContent = 'Text-to-speech is not supported in this browser.';
+        return;
+    }
+    if (isDictionaryReading) {
+        window.speechSynthesis.cancel();
+        isDictionaryReading = false;
+        document.getElementById(speakButtonId).textContent = '🗣️';
+        return;
+    }
+
+    const results = document.getElementById(resultsId);
+    const textToSpeak = getDictionaryTextToSpeak(results);
+    if (!textToSpeak) {
+        document.getElementById('processing-status').textContent = 'No text to read';
+        return;
+    }
+
+    stopSpeech();
+    isDictionaryReading = true;
+    document.getElementById(speakButtonId).textContent = '⏸️';
+    const voiceMap = {
+        'hi': defaultHindiVoice,
+        'or': defaultOdiaVoice,
+        'en': defaultEnglishVoice
+    };
+    speechUtterances = [];
+    activeUtterances = 0;
+    let usedVoicesCount = 0;
+    ['hi', 'or', 'en'].forEach(langPrefix => {
+        const filteredText = filterTextByLanguage(textToSpeak, langPrefix);
+        if (filteredText) {
+            const voice = voiceMap[langPrefix];
+            if (voice) {
+                const utterance = new SpeechSynthesisUtterance(filteredText);
+                utterance.voice = voice;
+                utterance.lang = voice.lang;
+                utterance.rate = 0.7;
+                utterance.pitch = 1.0;
+                utterance.volume = 4.0;
+                utterance.onend = () => {
+                    activeUtterances--;
+                    if (activeUtterances === 0) {
+                        isDictionaryReading = false;
+                        document.getElementById(speakButtonId).textContent = '🗣️';
+                        document.getElementById('processing-status').textContent = 'Finished reading';
+                    }
+                };
+                speechUtterances.push(utterance);
+                activeUtterances++;
+                usedVoicesCount++;
+            }
+        }
+    });
+    if (activeUtterances > 0) {
+        speechUtterances.forEach(utterance => window.speechSynthesis.speak(utterance));
+        document.getElementById('processing-status').textContent = `Reading with ${usedVoicesCount} voice${usedVoicesCount > 1 ? 's' : ''}...`;
+    } else {
+        isDictionaryReading = false;
+        document.getElementById(speakButtonId).textContent = '🗣️';
+        document.getElementById('processing-status').textContent = 'No text available for reading';
+    }
+}
+
+function setupDictionarySearch() {
+    const searchInput = document.getElementById('dictionarySearch');
+    const resultsElement = document.getElementById('dictionaryResults');
+    const suggestionsElement = document.getElementById('dictionarySuggestions');
+    const addForm = document.querySelector('.dictionary-form');
+    addForm.style.display = 'none';
+    searchInput.addEventListener('click', () => {
+        searchInput.value = '';
+        resultsElement.innerHTML = '';
+        suggestionsElement.innerHTML = '';
+        document.getElementById('dictionarySpeakButton').disabled = true;
+        addForm.style.display = 'none';
+    });
+    searchInput.addEventListener('input', () => {
+        clearTimeout(dictionaryTimeout);
+        resultsElement.innerHTML = '';
+        suggestionsElement.innerHTML = '';
+        document.getElementById('dictionarySpeakButton').disabled = true;
+        addForm.style.display = 'none';
+
+        const word = searchInput.value;
+        if (word.trim()) {
+            dictionaryTimeout = setTimeout(async () => {
+                await searchWord(word, resultsElement, suggestionsElement, true);
+                setupSuggestionListeners(suggestionsElement, searchInput, resultsElement, document.getElementById('dictionarySpeakButton'));
+                document.getElementById('dictionarySpeakButton').disabled = !isTTSSupported || resultsElement.innerHTML === '';
+            }, 300);
+        }
+    });
+    document.getElementById('saveWordButton').addEventListener('click', async () => {
+        const english = document.getElementById('newEnglish').value.trim();
+        const odia = document.getElementById('newOdia').value.trim();
+        const hindi = document.getElementById('newHindi').value.trim();
+        const imageFileInput = document.getElementById('newImage');
+        const imageFile = imageFileInput.files ? imageFileInput.files[0] : null;
+        if (english || odia || hindi) {
+            const saved = await saveCustomWord(english || '', odia || '', hindi || '', imageFile);
+            if (saved) {
+                document.getElementById('newEnglish').value = '';
+                document.getElementById('newOdia').value = '';
+                document.getElementById('newHindi').value = '';
+                imageFileInput.value = '';
+                await searchWord(english || odia || hindi, resultsElement, suggestionsElement, true);
+                setupSuggestionListeners(suggestionsElement, searchInput, resultsElement, document.getElementById('dictionarySpeakButton'));
+                document.getElementById('dictionarySpeakButton').disabled = !isTTSSupported || resultsElement.innerHTML === '';
+                addForm.style.display = 'none';
+            }
+        }
+    });
+}
+
+function setupFileUpload() {
+    const fileInput = document.getElementById('fileUpload');
+    fileInput.addEventListener('change', handleFileUpload);
+}
+
+function setupToggleSwitch() {
+    const toggleSwitch = document.getElementById('sectionToggle');
+    const dictionarySection = document.getElementById('dictionarySection');
+    const sectionsContainer = document.getElementById('sections');
+    toggleSwitch.addEventListener('change', () => {
+        if (toggleSwitch.checked) {
+            dictionarySection.classList.add('hidden');
+            sectionsContainer.classList.remove('hidden');
+        } else {
+            dictionarySection.classList.remove('hidden');
+            sectionsContainer.classList.add('hidden');
+        }
+    });
+    dictionarySection.classList.remove('hidden');
+    sectionsContainer.classList.add('hidden');
+}
+
+async function init() {
+    showProgress('Initializing application', 0);
+    await cacheFiles();
+    showProgress('Initializing databases', 50);
+    await initDatabases();
+    showProgress('Setting up UI', 75);
+    populateVoiceList();
+    if (isTTSSupported) {
+        window.speechSynthesis.onvoiceschanged = populateVoiceList;
+    }
+    const newImageInput = document.getElementById('newImage');
+    if (newImageInput) {
+        newImageInput.type = 'file';
+        newImageInput.accept = 'image/*';
+        newImageInput.removeAttribute('placeholder');
+    }
+    setupDictionarySearch();
+    setupFileUpload();
+    setupToggleSwitch();
+    showProgress('Ready', 100);
+
+    const firstOdiaWord = await getFirstOdiaWord();
+    if (firstOdiaWord) {
+        document.getElementById('dictionarySearch').value = firstOdiaWord;
+        await searchWord(firstOdiaWord, document.getElementById('dictionaryResults'), document.getElementById('dictionarySuggestions'), true);
+        document.getElementById('dictionarySpeakButton').disabled = !isTTSSupported || document.getElementById('dictionaryResults').innerHTML === '';
+    }
+
+    document.getElementById('homeButton').addEventListener('click', () => {
+        stopSpeech();
+        document.getElementById('contentArea').classList.remove('active');
+        document.getElementById('chapterContainer').classList.remove('hidden');
+        document.getElementById('contentInner').innerHTML = '';
+        document.getElementById('fileUpload').value = '';
+        sentences = [];
+        currentSentenceIndex = -1;
+        currentMcqIndex = 0;
+        lastTappedSentenceIndex = -1;
+        lastTappedFile = null;
+        currentSubjectsMap = null;
+        currentChapterName = '';
+        currentSubjectName = '';
+        updateTTSVisibility();
+
+        if (currentSectionIndex !== null && currentChapterIndex !== null) {
+            const sectionElement = document.getElementById(`section-${currentSectionIndex}`);
+            const chapterElement = document.getElementById(`chapter-${currentSectionIndex}-${currentChapterIndex}`);
+            if (sectionElement && chapterElement) {
+                sectionElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                chapterElement.classList.add('highlight');
+                setTimeout(() => {
+                    chapterElement.classList.remove('highlight');
+                }, 2000);
+            }
+        }
+    });
+    document.getElementById('popupClose').addEventListener('click', () => {
+        const popup = document.getElementById('popup');
+        popup.classList.remove('visible');
+        setTimeout(() => {
+            popup.style.display = 'none';
+            document.getElementById('popupContent').innerHTML = '';
+        }, 200);
+    });
+    document.getElementById('helpButton').addEventListener('click', () => {
+        const popup = document.getElementById('popup');
+        const popupContent = document.getElementById('popupContent');
+        popupContent.innerHTML = `
+            <h2>App Features</h2>
+            <ul>
+                <li><strong>Dictionary:</strong> Search words across English, Odia, Hindi with images and voice pronunciation.</li>
+                <li><strong>Add Words:</strong> Create custom dictionary entries including images from your device.</li>
+                <li><strong>Chapters:</strong> Explore GK and Grammar in Odia/English, organized into subjects with MCQ quizzes.</li>
+                <li><strong>MCQs:</strong> Take interactive quizzes in sets of 10, receive scores and explanations. Use Skip button to move on (counts as attempted).</li>
+                <li><strong>Voice Reading:</strong> Listen to content using TTS in multiple languages; play, pause, stop. Automatically highlights and reads MCQs and correct answers.</li>
+                <li><strong>File Upload:</strong> Load your own documents (PDF, TXT, HTML) for reading or converting to quizzes.</li>
+                <li><strong>Text Selection:</strong> Tap/Select words in content to open dictionary popup instantly.</li>
+                <li><strong>Offline Access:</strong> Download content and dictionaries for use without internet.</li>
+                <li><strong>Support Us:</strong> Contribute via phonepe QR Code given or 9348692218 for this valuable content</li>
+            </ul>
+        `;
+        popup.style.display = 'block';
+        setTimeout(() => { popup.classList.add('visible'); }, 10);
+    });
+    if (isTTSSupported) {
+        document.getElementById('voiceButton').addEventListener('click', playSpeech);
+        document.getElementById('stopButton').addEventListener('click', stopSpeech);
+        document.getElementById('dictionarySpeakButton').addEventListener('click', () => speakDictionaryResults('dictionaryResults', 'dictionarySpeakButton'));
+    }
+
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/service-worker.js').then(registration => {
+            console.log('Service Worker registered with scope:', registration.scope);
+        }).catch(error => {
+            console.error('Service Worker registration failed:', error);
+        });
+    }
+}
+
+window.addEventListener('load', init);
+</script>
+</body>
+</html>
