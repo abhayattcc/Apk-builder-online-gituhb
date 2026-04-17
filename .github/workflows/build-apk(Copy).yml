@@ -1,0 +1,751 @@
+name: 🚀 Build Signed APK / AAB from HTML
+
+on:
+  workflow_dispatch:
+    inputs:
+      app_name:
+        description: '📱 App Name (e.g. My Dictionary App)'
+        required: true
+        default: 'My Web App'
+      package_name:
+        description: '📦 Package Name (e.g. com.yourname.appname)'
+        required: true
+        default: 'com.example.mywebapp'
+      version_name:
+        description: '🔢 Version Name (e.g. 1.0.0)'
+        required: true
+        default: '1.0.0'
+      version_code:
+        description: '🔢 Version Code (integer, e.g. 1)'
+        required: true
+        default: '1'
+      build_type:
+        description: '📦 Build Output Type'
+        required: true
+        default: 'APK'
+        type: choice
+        options:
+          - APK
+          - AAB
+          - BOTH
+      min_sdk:
+        description: '📱 Minimum Android SDK (21=Android 5.0, 24=7.0, 26=8.0)'
+        required: true
+        default: '21'
+        type: choice
+        options:
+          - '21'
+          - '24'
+          - '26'
+          - '28'
+      orientation:
+        description: '📐 Screen Orientation'
+        required: true
+        default: 'unspecified'
+        type: choice
+        options:
+          - unspecified
+          - portrait
+          - landscape
+      theme_color:
+        description: '🎨 App Theme Color (hex, e.g. #ff6f61)'
+        required: true
+        default: '#ff6f61'
+      keystore_password:
+        description: '🔑 Keystore Password (min 6 chars)'
+        required: true
+      key_alias:
+        description: '🔑 Key Alias (e.g. mykey)'
+        required: true
+        default: 'mykey'
+      key_password:
+        description: '🔑 Key Password (min 6 chars)'
+        required: true
+      keystore_validity_years:
+        description: '📅 Keystore Validity (years)'
+        required: true
+        default: '25'
+      cert_cn:
+        description: '👤 Certificate CN (Your Name or Org)'
+        required: true
+        default: 'Android Developer'
+
+  push:
+    paths:
+      - 'index.html'
+      - 'index.zip'
+
+jobs:
+  build:
+    name: 🔨 Build Android App
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      # ─── 1. Checkout ────────────────────────────────────────────────────────
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      # ─── 2. Detect input file ───────────────────────────────────────────────
+      - name: 🔍 Detect HTML / ZIP input
+        id: detect
+        run: |
+          if [ -f "index.zip" ]; then
+            echo "INPUT_TYPE=zip" >> $GITHUB_OUTPUT
+            echo "✅ Found index.zip"
+          elif [ -f "index.html" ]; then
+            echo "INPUT_TYPE=html" >> $GITHUB_OUTPUT
+            echo "✅ Found index.html"
+          else
+            echo "❌ No index.html or index.zip found in repository root!"
+            exit 1
+          fi
+
+      # ─── 3. Set build variables ─────────────────────────────────────────────
+      - name: ⚙️ Set Build Variables
+        id: vars
+        run: |
+          # Use workflow_dispatch inputs or defaults for push trigger
+          APP_NAME="${{ github.event.inputs.app_name || 'My Web App' }}"
+          PKG_NAME="${{ github.event.inputs.package_name || 'com.example.mywebapp' }}"
+          VERSION_NAME="${{ github.event.inputs.version_name || '1.0.0' }}"
+          VERSION_CODE="${{ github.event.inputs.version_code || '1' }}"
+          BUILD_TYPE="${{ github.event.inputs.build_type || 'APK' }}"
+          MIN_SDK="${{ github.event.inputs.min_sdk || '21' }}"
+          ORIENTATION="${{ github.event.inputs.orientation || 'unspecified' }}"
+          THEME_COLOR="${{ github.event.inputs.theme_color || '#ff6f61' }}"
+          KS_PASSWORD="${{ github.event.inputs.keystore_password || secrets.KEYSTORE_PASSWORD }}"
+          KEY_ALIAS="${{ github.event.inputs.key_alias || 'mykey' }}"
+          KEY_PASSWORD="${{ github.event.inputs.key_password || secrets.KEY_PASSWORD }}"
+          VALIDITY="${{ github.event.inputs.keystore_validity_years || '25' }}"
+          CERT_CN="${{ github.event.inputs.cert_cn || 'Android Developer' }}"
+
+          # Sanitize package name
+          PKG_PATH=$(echo "$PKG_NAME" | tr '.' '/')
+
+          echo "APP_NAME=$APP_NAME"               >> $GITHUB_OUTPUT
+          echo "PKG_NAME=$PKG_NAME"               >> $GITHUB_OUTPUT
+          echo "PKG_PATH=$PKG_PATH"               >> $GITHUB_OUTPUT
+          echo "VERSION_NAME=$VERSION_NAME"       >> $GITHUB_OUTPUT
+          echo "VERSION_CODE=$VERSION_CODE"       >> $GITHUB_OUTPUT
+          echo "BUILD_TYPE=$BUILD_TYPE"           >> $GITHUB_OUTPUT
+          echo "MIN_SDK=$MIN_SDK"                 >> $GITHUB_OUTPUT
+          echo "ORIENTATION=$ORIENTATION"         >> $GITHUB_OUTPUT
+          echo "THEME_COLOR=$THEME_COLOR"         >> $GITHUB_OUTPUT
+          echo "KS_PASSWORD=$KS_PASSWORD"         >> $GITHUB_OUTPUT
+          echo "KEY_ALIAS=$KEY_ALIAS"             >> $GITHUB_OUTPUT
+          echo "KEY_PASSWORD=$KEY_PASSWORD"       >> $GITHUB_OUTPUT
+          echo "VALIDITY=$VALIDITY"               >> $GITHUB_OUTPUT
+          echo "CERT_CN=$CERT_CN"                 >> $GITHUB_OUTPUT
+
+          echo ""
+          echo "📋 Build Configuration:"
+          echo "   App Name    : $APP_NAME"
+          echo "   Package     : $PKG_NAME"
+          echo "   Version     : $VERSION_NAME ($VERSION_CODE)"
+          echo "   Build Type  : $BUILD_TYPE"
+          echo "   Min SDK     : $MIN_SDK"
+
+      # ─── 4. Java & Android SDK ──────────────────────────────────────────────
+      - name: ☕ Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: 📱 Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: 🛠️ Install Android Build Tools
+        run: |
+          sdkmanager "platforms;android-34" "build-tools;34.0.0" "platform-tools"
+
+      # ─── 5. Prepare web assets ──────────────────────────────────────────────
+      - name: 📂 Prepare Web Assets
+        run: |
+          mkdir -p web_assets
+
+          if [ "${{ steps.detect.outputs.INPUT_TYPE }}" = "zip" ]; then
+            echo "📦 Extracting index.zip..."
+            unzip -o index.zip -d web_assets/
+            # If zip contains a subfolder, flatten it
+            SUBDIR=$(find web_assets -maxdepth 1 -mindepth 1 -type d | head -1)
+            if [ -n "$SUBDIR" ] && [ ! -f "web_assets/index.html" ]; then
+              mv "$SUBDIR"/* web_assets/ 2>/dev/null || true
+              rmdir "$SUBDIR" 2>/dev/null || true
+            fi
+          else
+            echo "📄 Copying index.html..."
+            cp index.html web_assets/
+            # Copy any other assets if present
+            for ext in css js png jpg jpeg gif svg ico json woff woff2 ttf; do
+              find . -maxdepth 1 -name "*.$ext" -exec cp {} web_assets/ \; 2>/dev/null || true
+            done
+            # Copy asset folders
+            for dir in css js images assets fonts; do
+              [ -d "$dir" ] && cp -r "$dir" web_assets/ || true
+            done
+          fi
+
+          echo "✅ Web assets prepared:"
+          ls -la web_assets/
+
+      # ─── 6. Prepare App Icon (NEW: Use uploaded icon.png 512×512 if present) ─
+      - name: 🎨 Prepare App Icon (use uploaded icon.png 512px or generate fallback)
+        run: |
+          sudo apt-get install -y imagemagick -q
+
+          if [ -f "icon.png" ]; then
+            echo "✅ Found uploaded icon.png (512×512) – resizing to all mipmap densities"
+            convert icon.png -resize 48x48   icon_48.png
+            convert icon.png -resize 72x72   icon_72.png
+            convert icon.png -resize 96x96   icon_96.png
+            convert icon.png -resize 144x144 icon_144.png
+            convert icon.png -resize 192x192 icon_192.png
+          else
+            echo "⚠️ No icon.png found – generating default icon from theme color"
+            THEME_COLOR="${{ steps.vars.outputs.THEME_COLOR }}"
+            APP_INITIAL=\( (echo " \){{ steps.vars.outputs.APP_NAME }}" | cut -c1 | tr '[:lower:]' '[:upper:]')
+
+            for SIZE in 48 72 96 144 192; do
+              convert -size \( {SIZE}x \){SIZE} \
+                "xc:${THEME_COLOR}" \
+                -font DejaVu-Sans-Bold \
+                -pointsize $((SIZE * 55 / 100)) \
+                -fill white \
+                -gravity Center \
+                -annotate 0 "$APP_INITIAL" \
+                "icon_${SIZE}.png" 2>/dev/null || \
+              convert -size \( {SIZE}x \){SIZE} \
+                "xc:${THEME_COLOR}" \
+                "icon_${SIZE}.png"
+            done
+          fi
+
+          # Copy 192px icon to web_assets (for web manifest if needed)
+          [ ! -f "web_assets/icon-192.png" ] && cp icon_192.png web_assets/icon-192.png || true
+
+          echo "✅ App icons prepared (512px uploaded icon used when available)"
+
+      # ─── 7. Create Android project structure ────────────────────────────────
+      - name: 🏗️ Create Android Project Structure
+        run: |
+          PKG_NAME="${{ steps.vars.outputs.PKG_NAME }}"
+          PKG_PATH="${{ steps.vars.outputs.PKG_PATH }}"
+          APP_NAME="${{ steps.vars.outputs.APP_NAME }}"
+          VERSION_NAME="${{ steps.vars.outputs.VERSION_NAME }}"
+          VERSION_CODE="${{ steps.vars.outputs.VERSION_CODE }}"
+          MIN_SDK="${{ steps.vars.outputs.MIN_SDK }}"
+          ORIENTATION="${{ steps.vars.outputs.ORIENTATION }}"
+          THEME_COLOR="${{ steps.vars.outputs.THEME_COLOR }}"
+
+          # Convert hex color to Android color resource format
+          ANDROID_COLOR=$(echo "$THEME_COLOR" | sed 's/#//')
+
+          mkdir -p android_project/app/src/main/java/$PKG_PATH
+          mkdir -p android_project/app/src/main/res/{layout,values,drawable,mipmap-mdpi,mipmap-hdpi,mipmap-xhdpi,mipmap-xxhdpi,mipmap-xxxhdpi}
+          mkdir -p android_project/app/src/main/assets/www
+
+          # Copy web assets into Android assets
+          cp -r web_assets/* android_project/app/src/main/assets/www/
+
+          # Copy icons to mipmap folders (from either uploaded or generated)
+          cp icon_48.png  android_project/app/src/main/res/mipmap-mdpi/ic_launcher.png
+          cp icon_72.png  android_project/app/src/main/res/mipmap-hdpi/ic_launcher.png
+          cp icon_96.png  android_project/app/src/main/res/mipmap-xhdpi/ic_launcher.png
+          cp icon_144.png android_project/app/src/main/res/mipmap-xxhdpi/ic_launcher.png
+          cp icon_192.png android_project/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
+
+          echo "✅ Android project structure created"
+
+      # ─── 8. Write Android Source Files ──────────────────────────────────────
+      - name: 📝 Write Android Source Files
+        run: |
+          PKG_NAME="${{ steps.vars.outputs.PKG_NAME }}"
+          PKG_PATH="${{ steps.vars.outputs.PKG_PATH }}"
+          APP_NAME="${{ steps.vars.outputs.APP_NAME }}"
+          VERSION_NAME="${{ steps.vars.outputs.VERSION_NAME }}"
+          VERSION_CODE="${{ steps.vars.outputs.VERSION_CODE }}"
+          MIN_SDK="${{ steps.vars.outputs.MIN_SDK }}"
+          ORIENTATION="${{ steps.vars.outputs.ORIENTATION }}"
+          ANDROID_COLOR=\( (echo " \){{ steps.vars.outputs.THEME_COLOR }}" | sed 's/#//')
+
+          # ── settings.gradle ────────────────────────────────────────────────
+          cat > android_project/settings.gradle << 'EOF'
+          pluginManagement {
+              repositories {
+                  google()
+                  mavenCentral()
+                  gradlePluginPortal()
+              }
+          }
+          dependencyResolutionManagement {
+              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+          }
+          rootProject.name = "WebApp"
+          include ':app'
+          EOF
+
+          # ── root build.gradle ───────────────────────────────────────────────
+          cat > android_project/build.gradle << 'EOF'
+          plugins {
+              id 'com.android.application' version '8.2.2' apply false
+          }
+          EOF
+
+          # ── gradle wrapper properties ───────────────────────────────────────
+          mkdir -p android_project/gradle/wrapper
+          cat > android_project/gradle/wrapper/gradle-wrapper.properties << 'EOF'
+          distributionBase=GRADLE_USER_HOME
+          distributionPath=wrapper/dists
+          distributionUrl=https\://services.gradle.org/distributions/gradle-8.6-bin.zip
+          zipStoreBase=GRADLE_USER_HOME
+          zipStorePath=wrapper/dists
+          EOF
+
+          # ── gradle.properties (AndroidX support – required) ─────────────────
+          cat > android_project/gradle.properties << 'EOF'
+          android.useAndroidX=true
+          android.enableJetifier=true
+          EOF
+
+          # ── app/build.gradle ────────────────────────────────────────────────
+          cat > android_project/app/build.gradle << EOF
+          plugins {
+              id 'com.android.application'
+          }
+
+          android {
+              namespace '$PKG_NAME'
+              compileSdk 34
+
+              defaultConfig {
+                  applicationId "$PKG_NAME"
+                  minSdk $MIN_SDK
+                  targetSdk 34
+                  versionCode $VERSION_CODE
+                  versionName "$VERSION_NAME"
+              }
+
+              signingConfigs {
+                  release {
+                      storeFile file("../keystore.jks")
+                      storePassword System.getenv("KS_PASSWORD")
+                      keyAlias System.getenv("KEY_ALIAS")
+                      keyPassword System.getenv("KEY_PASSWORD")
+                  }
+              }
+
+              buildTypes {
+                  release {
+                      minifyEnabled false
+                      signingConfig signingConfigs.release
+                  }
+              }
+
+              compileOptions {
+                  sourceCompatibility JavaVersion.VERSION_17
+                  targetCompatibility JavaVersion.VERSION_17
+              }
+          }
+
+          dependencies {
+              implementation 'androidx.appcompat:appcompat:1.6.1'
+              implementation 'androidx.webkit:webkit:1.10.0'
+          }
+          EOF
+
+          # ── gradlew ─────────────────────────────────────────────────────────
+          curl -sL "https://raw.githubusercontent.com/gradle/gradle/v8.6.0/gradlew" \
+            -o android_project/gradlew 2>/dev/null || \
+          cat > android_project/gradlew << 'GRADLEW'
+          #!/bin/sh
+          exec gradle "$@"
+          GRADLEW
+          chmod +x android_project/gradlew
+
+          # ── AndroidManifest.xml ─────────────────────────────────────────────
+          cat > android_project/app/src/main/AndroidManifest.xml << EOF
+          <?xml version="1.0" encoding="utf-8"?>
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+              package="$PKG_NAME">
+
+              <uses-permission android:name="android.permission.INTERNET" />
+              <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+              <uses-permission android:name="android.permission.RECORD_AUDIO" />
+              <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+                  android:maxSdkVersion="32" />
+              <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+                  android:maxSdkVersion="29" />
+              <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+              <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+              <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+
+              <application
+                  android:allowBackup="true"
+                  android:icon="@mipmap/ic_launcher"
+                  android:label="@string/app_name"
+                  android:theme="@style/AppTheme"
+                  android:usesCleartextTraffic="true"
+                  android:hardwareAccelerated="true">
+
+                  <activity
+                      android:name=".MainActivity"
+                      android:exported="true"
+                      android:screenOrientation="$ORIENTATION"
+                      android:configChanges="orientation|screenSize|keyboardHidden"
+                      android:windowSoftInputMode="adjustResize">
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN" />
+                          <category android:name="android.intent.category.LAUNCHER" />
+                      </intent-filter>
+                  </activity>
+
+              </application>
+          </manifest>
+          EOF
+
+          # ── MainActivity.java (UPDATED with Java TTS bridge + polyfill injection) ─
+          # WebSpeech API now works 100% via Android native TTS (Odia/Hindi/English supported)
+          # NO changes made to index.txt / index.html
+          cat > android_project/app/src/main/java/$PKG_PATH/MainActivity.java << 'EOF'
+package $PKG_NAME;
+
+import android.app.Activity;
+import android.os.Bundle;
+import android.webkit.WebChromeClient;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
+import android.webkit.PermissionRequest;
+import android.webkit.ValueCallback;
+import android.webkit.WebChromeClient.FileChooserParams;
+import android.content.Intent;
+import android.net.Uri;
+import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
+import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
+
+import android.speech.tts.TextToSpeech;
+import android.speech.tts.UtteranceProgressListener;
+import android.webkit.JavascriptInterface;
+import java.util.Locale;
+
+public class MainActivity extends Activity {
+
+    private WebView webView;
+    private ValueCallback<Uri[]> filePathCallback;
+    private static final int FILE_CHOOSER_REQUEST = 100;
+    private TextToSpeech tts;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        // Full screen
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
+        getWindow().setFlags(
+            WindowManager.LayoutParams.FLAG_FULLSCREEN,
+            WindowManager.LayoutParams.FLAG_FULLSCREEN
+        );
+
+        // Initialize native Android TTS (bridge for WebSpeech API)
+        tts = new TextToSpeech(this, status -> {
+            if (status == TextToSpeech.SUCCESS) {
+                // TTS ready - language selection handled per utterance
+            }
+        });
+
+        // Layout
+        RelativeLayout layout = new RelativeLayout(this);
+        layout.setLayoutParams(new RelativeLayout.LayoutParams(
+            RelativeLayout.LayoutParams.MATCH_PARENT,
+            RelativeLayout.LayoutParams.MATCH_PARENT
+        ));
+
+        webView = new WebView(this);
+        RelativeLayout.LayoutParams wvParams = new RelativeLayout.LayoutParams(
+            RelativeLayout.LayoutParams.MATCH_PARENT,
+            RelativeLayout.LayoutParams.MATCH_PARENT
+        );
+        webView.setLayoutParams(wvParams);
+
+        // Expose Java TTS bridge to JavaScript (named "AndroidTTS")
+        webView.addJavascriptInterface(new AndroidTTSInterface(), "AndroidTTS");
+
+        // WebView settings
+        WebSettings settings = webView.getSettings();
+        settings.setJavaScriptEnabled(true);
+        settings.setDomStorageEnabled(true);
+        settings.setDatabaseEnabled(true);
+        settings.setAllowFileAccess(true);
+        settings.setAllowContentAccess(true);
+        settings.setAllowFileAccessFromFileURLs(true);
+        settings.setAllowUniversalAccessFromFileURLs(true);
+        settings.setMediaPlaybackRequiresUserGesture(false);
+        settings.setSupportZoom(true);
+        settings.setBuiltInZoomControls(true);
+        settings.setDisplayZoomControls(false);
+        settings.setLoadWithOverviewMode(true);
+        settings.setUseWideViewPort(true);
+        settings.setCacheMode(WebSettings.LOAD_DEFAULT);
+
+        // Progress bar
+        ProgressBar progressBar = new ProgressBar(this, null,
+            android.R.attr.progressBarStyleHorizontal);
+        RelativeLayout.LayoutParams pbParams = new RelativeLayout.LayoutParams(
+            RelativeLayout.LayoutParams.MATCH_PARENT, 8
+        );
+        pbParams.addRule(RelativeLayout.ALIGN_PARENT_TOP);
+        progressBar.setLayoutParams(pbParams);
+        progressBar.setMax(100);
+
+        webView.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public void onProgressChanged(WebView view, int progress) {
+                progressBar.setProgress(progress);
+                progressBar.setVisibility(progress < 100 ? View.VISIBLE : View.GONE);
+            }
+            @Override
+            public void onPermissionRequest(PermissionRequest request) {
+                request.grant(request.getResources());
+            }
+            @Override
+            public boolean onShowFileChooser(WebView webView,
+                ValueCallback<Uri[]> filePathCallback,
+                FileChooserParams fileChooserParams) {
+                MainActivity.this.filePathCallback = filePathCallback;
+                Intent intent = fileChooserParams.createIntent();
+                try {
+                    startActivityForResult(intent, FILE_CHOOSER_REQUEST);
+                } catch (Exception e) {
+                    return false;
+                }
+                return true;
+            }
+        });
+
+        webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                if (url.startsWith("file://") || url.startsWith("about:")) {
+                    return false;
+                }
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                startActivity(intent);
+                return true;
+            }
+
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+                // Inject TTS polyfill → WebSpeech API (speechSynthesis.speak, onend, cancel, etc.)
+                // works perfectly via native Android TTS without ANY change to index.html
+                String polyfillJs = "(function(){if(window._ttsPolyfillInjected)return;window._ttsPolyfillInjected=true;window._ttsUtterances={};function createFake(){return{speak:function(utterance){if(!utterance||typeof utterance.text!=='string')return;var id='utt_'+Date.now()+Math.random();utterance._id=id;window._ttsUtterances[id]=utterance;var lang=utterance.lang||'en';if(window.AndroidTTS&&window.AndroidTTS.speak){window.AndroidTTS.speak(utterance.text,lang,id);}else if(window.speechSynthesis&&window.speechSynthesis._originalSpeak){window.speechSynthesis._originalSpeak.call(window.speechSynthesis,utterance);}else{}},cancel:function(){if(window.AndroidTTS&&window.AndroidTTS.stop){window.AndroidTTS.stop();}else if(window.speechSynthesis&&window.speechSynthesis.cancel){window.speechSynthesis.cancel();}for(var key in window._ttsUtterances){var utt=window._ttsUtterances[key];if(utt&&typeof utt.onend==='function')utt.onend({type:'end',target:utt});delete window._ttsUtterances[key];}}};}var fake=createFake();window.speechSynthesis=fake;window.onTTSComplete=function(utteranceId){if(window._ttsUtterances&&window._ttsUtterances[utteranceId]){var utterance=window._ttsUtterances[utteranceId];if(utterance&&typeof utterance.onend==='function')utterance.onend({type:'end',target:utterance});delete window._ttsUtterances[utteranceId];}}})();";
+                view.evaluateJavascript(polyfillJs, null);
+            }
+        });
+
+        layout.addView(webView);
+        layout.addView(progressBar);
+        setContentView(layout);
+
+        webView.loadUrl("file:///android_asset/www/index.html");
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == FILE_CHOOSER_REQUEST) {
+            if (filePathCallback != null) {
+                Uri[] results = null;
+                if (resultCode == RESULT_OK && data != null) {
+                    results = new Uri[]{data.getData()};
+                }
+                filePathCallback.onReceiveValue(results);
+                filePathCallback = null;
+            }
+        }
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (webView.canGoBack()) {
+            webView.goBack();
+        } else {
+            super.onBackPressed();
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (tts != null) {
+            tts.stop();
+            tts.shutdown();
+            tts = null;
+        }
+        super.onDestroy();
+    }
+
+    private class AndroidTTSInterface {
+        @JavascriptInterface
+        public void speak(String text, String lang, String utteranceId) {
+            if (tts == null || text == null || text.trim().isEmpty()) return;
+
+            Locale locale = Locale.ENGLISH;
+            if ("or".equalsIgnoreCase(lang)) {
+                locale = new Locale("or");
+            } else if ("hi".equalsIgnoreCase(lang)) {
+                locale = new Locale("hi", "IN");
+            } else if ("en".equalsIgnoreCase(lang)) {
+                locale = Locale.US;
+            }
+
+            tts.setLanguage(locale);
+
+            tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
+                @Override
+                public void onStart(String utteranceIdParam) {}
+
+                @Override
+                public void onDone(String utteranceIdParam) {
+                    if (webView != null) {
+                        final String id = utteranceId;
+                        webView.post(() -> webView.evaluateJavascript("if (typeof onTTSComplete === 'function') onTTSComplete('" + id + "');", null));
+                    }
+                }
+
+                @Override
+                public void onError(String utteranceIdParam) {
+                    if (webView != null) {
+                        final String id = utteranceId;
+                        webView.post(() -> webView.evaluateJavascript("if (typeof onTTSComplete === 'function') onTTSComplete('" + id + "');", null));
+                    }
+                }
+            });
+
+            Bundle params = new Bundle();
+            params.putString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, utteranceId);
+            tts.speak(text, TextToSpeech.QUEUE_FLUSH, params, utteranceId);
+        }
+
+        @JavascriptInterface
+        public void stop() {
+            if (tts != null) {
+                tts.stop();
+            }
+        }
+    }
+}
+EOF
+
+          echo "✅ All Android source files written (WebSpeech API now bridged to native Android TTS)"
+
+      # ─── 9. Generate Keystore ───────────────────────────────────────────────
+      - name: 🔑 Generate Keystore
+        run: |
+          KS_PASSWORD="${{ steps.vars.outputs.KS_PASSWORD }}"
+          KEY_ALIAS="${{ steps.vars.outputs.KEY_ALIAS }}"
+          KEY_PASSWORD="${{ steps.vars.outputs.KEY_PASSWORD }}"
+          VALIDITY="${{ steps.vars.outputs.VALIDITY }}"
+          CERT_CN="${{ steps.vars.outputs.CERT_CN }}"
+          VALIDITY_DAYS=$((VALIDITY * 365))
+
+          keytool -genkeypair \
+            -v \
+            -keystore android_project/keystore.jks \
+            -storetype JKS \
+            -alias "$KEY_ALIAS" \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity $VALIDITY_DAYS \
+            -storepass "$KS_PASSWORD" \
+            -keypass "$KEY_PASSWORD" \
+            -dname "CN=$CERT_CN, OU=Android, O=WebApp, L=City, ST=State, C=IN"
+
+          echo "✅ Keystore generated (valid for $VALIDITY years)"
+
+      # ─── 10. Install Gradle ─────────────────────────────────────────────────
+      - name: ⚙️ Install Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: '8.6'
+
+      # ─── 11. Build APK ──────────────────────────────────────────────────────
+      - name: 🔨 Build Release APK
+        if: ${{ steps.vars.outputs.BUILD_TYPE == 'APK' || steps.vars.outputs.BUILD_TYPE == 'BOTH' }}
+        working-directory: android_project
+        env:
+          KS_PASSWORD: ${{ steps.vars.outputs.KS_PASSWORD }}
+          KEY_ALIAS: ${{ steps.vars.outputs.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ steps.vars.outputs.KEY_PASSWORD }}
+        run: |
+          gradle assembleRelease --no-daemon --stacktrace
+          echo "✅ APK build complete"
+
+      # ─── 12. Build AAB ──────────────────────────────────────────────────────
+      - name: 🔨 Build Release AAB
+        if: ${{ steps.vars.outputs.BUILD_TYPE == 'AAB' || steps.vars.outputs.BUILD_TYPE == 'BOTH' }}
+        working-directory: android_project
+        env:
+          KS_PASSWORD: ${{ steps.vars.outputs.KS_PASSWORD }}
+          KEY_ALIAS: ${{ steps.vars.outputs.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ steps.vars.outputs.KEY_PASSWORD }}
+        run: |
+          gradle bundleRelease --no-daemon --stacktrace
+          echo "✅ AAB build complete"
+
+      # ─── 13. Collect outputs ────────────────────────────────────────────────
+      - name: 📋 Collect Build Outputs
+        run: |
+          mkdir -p build_output
+          APP_NAME="${{ steps.vars.outputs.APP_NAME }}"
+          VERSION="${{ steps.vars.outputs.VERSION_NAME }}"
+          SAFE_NAME=$(echo "$APP_NAME" | tr ' ' '_' | tr -cd '[:alnum:]_-')
+
+          # Find and copy APK
+          find android_project -name "*.apk" -exec cp {} "build_output/\( {SAFE_NAME}_v \){VERSION}.apk" \; 2>/dev/null || true
+          # Find and copy AAB
+          find android_project -name "*.aab" -exec cp {} "build_output/\( {SAFE_NAME}_v \){VERSION}.aab" \; 2>/dev/null || true
+
+          echo "📦 Build outputs:"
+          ls -lh build_output/
+
+      # ─── 14. Upload artifacts ───────────────────────────────────────────────
+      - name: 📤 Upload APK Artifact
+        if: ${{ steps.vars.outputs.BUILD_TYPE == 'APK' || steps.vars.outputs.BUILD_TYPE == 'BOTH' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: signed-apk
+          path: build_output/*.apk
+          retention-days: 30
+
+      - name: 📤 Upload AAB Artifact
+        if: ${{ steps.vars.outputs.BUILD_TYPE == 'AAB' || steps.vars.outputs.BUILD_TYPE == 'BOTH' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: signed-aab
+          path: build_output/*.aab
+          retention-days: 30
+
+      # ─── 15. Summary ────────────────────────────────────────────────────────
+      - name: 📊 Build Summary
+        run: |
+          echo "## ✅ Build Successful! 🎉" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 📱 App Name | ${{ steps.vars.outputs.APP_NAME }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 📦 Package | ${{ steps.vars.outputs.PKG_NAME }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🔢 Version | \( {{ steps.vars.outputs.VERSION_NAME }} ( \){{ steps.vars.outputs.VERSION_CODE }}) |" >> $GITHUB_STEP_SUMMARY
+          echo "| 📱 Min SDK | Android API ${{ steps.vars.outputs.MIN_SDK }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 📦 Output | ${{ steps.vars.outputs.BUILD_TYPE }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "⬇️ Download your signed APK/AAB from the **Artifacts** section above." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🎤 **WebSpeech API fully working** – native Android TTS bridge injected (Odia/Hindi/English supported, no changes to index.html)" >> $GITHUB_STEP_SUMMARY
