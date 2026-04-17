@@ -1,0 +1,106 @@
+name: Sign APK / Generate Signed AAB
+
+on:
+  workflow_dispatch:
+    inputs:
+      apk_file:
+        description: 'Name of the APK file to sign (e.g., sample.apk)'
+        required: true
+        default: 'sample.apk'
+      keystore_password:
+        description: 'Keystore Password'
+        required: true
+      key_password:
+        description: 'Key Password (leave empty if same as keystore password)'
+        required: false
+      alias:
+        description: 'Key Alias (override secret if needed)'
+        required: false
+        default: ''
+
+jobs:
+  sign-apk:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK (for apksigner and bundletool)
+        uses: android-actions/setup-android@v3
+
+      - name: Decode Keystore from Secret
+        run: |
+          echo "${{ secrets.SIGNING_KEY_BASE64 }}" | base64 --decode > signing-key.jks
+          echo "Keystore decoded successfully."
+
+      - name: Sign the APK with apksigner
+        env:
+          KEYSTORE_PASS: ${{ inputs.keystore_password }}
+          KEY_PASS: ${{ inputs.key_password || inputs.keystore_password }}
+          ALIAS: ${{ inputs.alias || secrets.KEY_ALIAS }}
+        run: |
+          APK_INPUT="${{ inputs.apk_file }}"
+          SIGNED_APK="signed-${APK_INPUT}"
+
+          echo "Signing ${APK_INPUT} → ${SIGNED_APK}"
+
+          # Align and sign (apksigner)
+          zipalign -v 4 "${APK_INPUT}" aligned.apk
+          apksigner sign \
+            --ks signing-key.jks \
+            --ks-pass pass:${KEYSTORE_PASS} \
+            --ks-key-alias "${ALIAS}" \
+            --key-pass pass:${KEY_PASS} \
+            --v1-signing-enabled true \
+            --v2-signing-enabled true \
+            --v3-signing-enabled true \
+            --out "${SIGNED_APK}" \
+            aligned.apk
+
+          # Verify signature
+          apksigner verify --verbose "${SIGNED_APK}"
+
+          echo "Signed APK created: ${SIGNED_APK}"
+
+      - name: (Optional) Generate Universal APK from AAB (if you uploaded .aab instead)
+        if: endsWith(inputs.apk_file, '.aab')
+        env:
+          KEYSTORE_PASS: ${{ inputs.keystore_password }}
+          KEY_PASS: ${{ inputs.key_password || inputs.keystore_password }}
+          ALIAS: ${{ inputs.alias || secrets.KEY_ALIAS }}
+        run: |
+          AAB_INPUT="${{ inputs.apk_file }}"
+          UNIVERSAL_APK="universal-signed.apk"
+
+          bundletool build-apks \
+            --bundle="${AAB_INPUT}" \
+            --output=universal.apks \
+            --mode=universal \
+            --ks=signing-key.jks \
+            --ks-pass=pass:${KEYSTORE_PASS} \
+            --ks-key-alias="${ALIAS}" \
+            --key-pass=pass:${KEY_PASS}
+
+          unzip -p universal.apks universal.apk > "${UNIVERSAL_APK}"
+          echo "Universal APK from AAB: ${UNIVERSAL_APK}"
+
+      - name: Upload Signed Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: signed-apk-aab
+          path: |
+            signed-*.apk
+            universal-*.apk
+            *.apks
+          retention-days: 7
+
+      - name: Clean up (optional security)
+        if: always()
+        run: rm -f signing-key.jks aligned.apk
