@@ -241,29 +241,43 @@ jobs:
           ANDROID_COLOR=$(echo "${{ steps.vars.outputs.THEME_COLOR }}" | sed 's/#//')
 
           cat > android_project/settings.gradle << 'EOF'
-          pluginManagement { repositories { google() mavenCentral() gradlePluginPortal() } }
-          dependencyResolutionManagement { repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS); repositories { google() mavenCentral() } }
-          rootProject.name = "WebApp"
-          include ':app'
-          EOF
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+rootProject.name = "WebApp"
+include ':app'
+EOF
 
           cat > android_project/build.gradle << 'EOF'
-          plugins { id 'com.android.application' version '8.2.2' apply false }
-          EOF
+plugins {
+    id 'com.android.application' version '8.2.2' apply false
+}
+EOF
 
           mkdir -p android_project/gradle/wrapper
           cat > android_project/gradle/wrapper/gradle-wrapper.properties << 'EOF'
-          distributionBase=GRADLE_USER_HOME
-          distributionPath=wrapper/dists
-          distributionUrl=https\://services.gradle.org/distributions/gradle-8.6-bin.zip
-          zipStoreBase=GRADLE_USER_HOME
-          zipStorePath=wrapper/dists
-          EOF
+distributionBase=GRADLE_USER_HOME
+distributionPath=wrapper/dists
+distributionUrl=https\://services.gradle.org/distributions/gradle-8.6-bin.zip
+zipStoreBase=GRADLE_USER_HOME
+zipStorePath=wrapper/dists
+EOF
 
           cat > android_project/gradle.properties << 'EOF'
-          android.useAndroidX=true
-          android.enableJetifier=true
-          EOF
+android.useAndroidX=true
+android.enableJetifier=true
+EOF
 
           cat > android_project/app/build.gradle << EOF
           plugins { id 'com.android.application' }
