@@ -1,0 +1,176 @@
+name: Build Signed APK / AAB
+
+# ─────────────────────────────────────────────────────────────
+# Triggered MANUALLY from GitHub Actions tab.
+# You will be prompted to fill in:
+#   • APK / App name
+#   • Keystore store-password
+#   • Keystore key-password
+# ─────────────────────────────────────────────────────────────
+on:
+  workflow_dispatch:
+    inputs:
+
+      app_name:
+        description: "APK output name  (e.g. MyApp-v1.0)"
+        required: true
+        default: "MyApp-release"
+        type: string
+
+      module_name:
+        description: "Gradle module name  (usually: app)"
+        required: true
+        default: "app"
+        type: string
+
+      build_type:
+        description: "What to build"
+        required: true
+        default: "APK"
+        type: choice
+        options:
+          - APK
+          - AAB
+          - APK + AAB
+
+      key_alias:
+        description: "Keystore key alias"
+        required: true
+        default: "release-key"
+        type: string
+
+      store_password:
+        description: "Keystore STORE password  ⚠️ (visible in logs — use Secrets for production)"
+        required: true
+        type: string
+
+      key_password:
+        description: "Keystore KEY password  ⚠️ (visible in logs — use Secrets for production)"
+        required: true
+        type: string
+
+      java_version:
+        description: "Java version"
+        required: false
+        default: "17"
+        type: choice
+        options:
+          - "17"
+          - "21"
+          - "11"
+
+# ─────────────────────────────────────────────────────────────
+jobs:
+  build:
+    name: "Build → ${{ github.event.inputs.app_name }}"
+    runs-on: ubuntu-latest
+
+    steps:
+
+      # ── 1. Checkout ────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── 2. Java ────────────────────────────────────────────
+      - name: Set up JDK ${{ github.event.inputs.java_version }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ github.event.inputs.java_version }}
+          distribution: temurin
+          cache: gradle
+
+      # ── 3. Permissions ─────────────────────────────────────
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+
+      # ── 4. Decode keystore ─────────────────────────────────
+      #    Reads SIGNING_KEYSTORE_BASE64 from repo Secrets.
+      #    → Settings › Secrets and variables › Actions
+      - name: Decode keystore
+        run: |
+          echo "${{ secrets.SIGNING_KEYSTORE_BASE64 }}" | base64 --decode > keystore.jks
+          echo "✅ keystore.jks written"
+
+      # ── 5. Inject signing config via local.properties ──────
+      - name: Write signing config
+        run: |
+          {
+            echo "storeFile=$(pwd)/keystore.jks"
+            echo "storePassword=${{ github.event.inputs.store_password }}"
+            echo "keyAlias=${{ github.event.inputs.key_alias }}"
+            echo "keyPassword=${{ github.event.inputs.key_password }}"
+          } >> local.properties
+
+      # ── 6a. Build APK ──────────────────────────────────────
+      - name: Build signed APK
+        if: ${{ github.event.inputs.build_type == 'APK' || github.event.inputs.build_type == 'APK + AAB' }}
+        run: ./gradlew :${{ github.event.inputs.module_name }}:assembleRelease
+
+      # ── 6b. Build AAB ──────────────────────────────────────
+      - name: Build signed AAB
+        if: ${{ github.event.inputs.build_type == 'AAB' || github.event.inputs.build_type == 'APK + AAB' }}
+        run: ./gradlew :${{ github.event.inputs.module_name }}:bundleRelease
+
+      # ── 7. Rename output files with custom app name ────────
+      - name: Rename APK
+        if: ${{ github.event.inputs.build_type == 'APK' || github.event.inputs.build_type == 'APK + AAB' }}
+        run: |
+          APK_PATH=$(find ${{ github.event.inputs.module_name }}/build/outputs/apk/release -name "*.apk" | head -1)
+          if [ -n "$APK_PATH" ]; then
+            DIR=$(dirname "$APK_PATH")
+            mv "$APK_PATH" "$DIR/${{ github.event.inputs.app_name }}.apk"
+            echo "📦 APK renamed to ${{ github.event.inputs.app_name }}.apk"
+          else
+            echo "❌ APK not found!" && exit 1
+          fi
+
+      - name: Rename AAB
+        if: ${{ github.event.inputs.build_type == 'AAB' || github.event.inputs.build_type == 'APK + AAB' }}
+        run: |
+          AAB_PATH=$(find ${{ github.event.inputs.module_name }}/build/outputs/bundle/release -name "*.aab" | head -1)
+          if [ -n "$AAB_PATH" ]; then
+            DIR=$(dirname "$AAB_PATH")
+            mv "$AAB_PATH" "$DIR/${{ github.event.inputs.app_name }}.aab"
+            echo "📦 AAB renamed to ${{ github.event.inputs.app_name }}.aab"
+          else
+            echo "❌ AAB not found!" && exit 1
+          fi
+
+      # ── 8. Upload APK artifact ─────────────────────────────
+      - name: Upload APK
+        if: ${{ github.event.inputs.build_type == 'APK' || github.event.inputs.build_type == 'APK + AAB' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: "${{ github.event.inputs.app_name }}-APK"
+          path: "${{ github.event.inputs.module_name }}/build/outputs/apk/release/${{ github.event.inputs.app_name }}.apk"
+          retention-days: 30
+
+      # ── 9. Upload AAB artifact ─────────────────────────────
+      - name: Upload AAB
+        if: ${{ github.event.inputs.build_type == 'AAB' || github.event.inputs.build_type == 'APK + AAB' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: "${{ github.event.inputs.app_name }}-AAB"
+          path: "${{ github.event.inputs.module_name }}/build/outputs/bundle/release/${{ github.event.inputs.app_name }}.aab"
+          retention-days: 30
+
+      # ── 10. Cleanup keystore (always) ─────────────────────
+      - name: Remove keystore
+        if: always()
+        run: |
+          rm -f keystore.jks
+          echo "🧹 keystore.jks removed"
+
+      # ── 11. Print summary ──────────────────────────────────
+      - name: Build summary
+        if: success()
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "  ✅  Build complete!"
+          echo "  📦  App name  : ${{ github.event.inputs.app_name }}"
+          echo "  🏗️  Module    : ${{ github.event.inputs.module_name }}"
+          echo "  📤  Output    : ${{ github.event.inputs.build_type }}"
+          echo "  ☕  Java      : ${{ github.event.inputs.java_version }}"
+          echo "  🔑  Key alias : ${{ github.event.inputs.key_alias }}"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Download artifacts from the Actions run page."
