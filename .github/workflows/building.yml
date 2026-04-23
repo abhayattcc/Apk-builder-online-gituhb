@@ -1,28 +1,31 @@
-name: Build Signed APK / AAB
+name: "Lucent GK — Build Signed APK / AAB"
 
-# ─────────────────────────────────────────────────────────────
-# Triggered MANUALLY from GitHub Actions tab.
-# You will be prompted to fill in:
-#   • APK / App name
-#   • Keystore store-password
-#   • Keystore key-password
-# ─────────────────────────────────────────────────────────────
+# ══════════════════════════════════════════════════════════════
+#  Project   : Lucent GK
+#  Package   : com.my.gk
+#  Module    : app
+#  compileSdk: 34  |  minSdk: 21  |  AGP: 8.12.0
+#  Language  : Java (pure)
+#
+#  Trigger   : Manual only  →  Actions tab → Run workflow
+#  You will be asked to enter:
+#    • APK / output file name
+#    • Keystore store-password
+#    • Keystore key-password
+# ══════════════════════════════════════════════════════════════
+
 on:
   workflow_dispatch:
     inputs:
 
+      # ── Output name ────────────────────────────────────────
       app_name:
-        description: "APK output name  (e.g. MyApp-v1.0)"
+        description: "Output file name  (e.g. LucentGK-v1.0)"
         required: true
-        default: "MyApp-release"
+        default: "LucentGK-release"
         type: string
 
-      module_name:
-        description: "Gradle module name  (usually: app)"
-        required: true
-        default: "app"
-        type: string
-
+      # ── Build type ─────────────────────────────────────────
       build_type:
         description: "What to build"
         required: true
@@ -33,6 +36,7 @@ on:
           - AAB
           - APK + AAB
 
+      # ── Signing inputs ─────────────────────────────────────
       key_alias:
         description: "Keystore key alias"
         required: true
@@ -40,29 +44,19 @@ on:
         type: string
 
       store_password:
-        description: "Keystore STORE password  ⚠️ (visible in logs — use Secrets for production)"
+        description: "Keystore STORE password"
         required: true
         type: string
 
       key_password:
-        description: "Keystore KEY password  ⚠️ (visible in logs — use Secrets for production)"
+        description: "Keystore KEY password"
         required: true
         type: string
 
-      java_version:
-        description: "Java version"
-        required: false
-        default: "17"
-        type: choice
-        options:
-          - "17"
-          - "21"
-          - "11"
-
-# ─────────────────────────────────────────────────────────────
+# ══════════════════════════════════════════════════════════════
 jobs:
   build:
-    name: "Build → ${{ github.event.inputs.app_name }}"
+    name: "Build ${{ github.event.inputs.app_name }} [${{ github.event.inputs.build_type }}]"
     runs-on: ubuntu-latest
 
     steps:
@@ -71,28 +65,86 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # ── 2. Java ────────────────────────────────────────────
-      - name: Set up JDK ${{ github.event.inputs.java_version }}
+      # ── 2. Java 17 ─────────────────────────────────────────
+      #    AGP 8.x requires Java 17 minimum.
+      - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
-          java-version: ${{ github.event.inputs.java_version }}
+          java-version: '17'
           distribution: temurin
           cache: gradle
 
-      # ── 3. Permissions ─────────────────────────────────────
-      - name: Make gradlew executable
-        run: chmod +x gradlew
+      # ── 3. Gradle wrapper ──────────────────────────────────
+      #    NewProject.zip ships without gradlew / gradle/wrapper/.
+      #    We bootstrap a compatible wrapper here automatically.
+      - name: Generate Gradle wrapper (Gradle 8.11.1 for AGP 8.12.0)
+        run: |
+          curl -fsSL https://services.gradle.org/distributions/gradle-8.11.1-bin.zip \
+               -o /tmp/gradle.zip
+          unzip -q /tmp/gradle.zip -d /tmp/gradle-dist
+          GRADLE=/tmp/gradle-dist/gradle-8.11.1/bin/gradle
+          $GRADLE wrapper --gradle-version 8.11.1 --distribution-type bin
+          chmod +x gradlew
+          echo "Gradle wrapper ready: $(./gradlew --version | grep '^Gradle')"
 
       # ── 4. Decode keystore ─────────────────────────────────
-      #    Reads SIGNING_KEYSTORE_BASE64 from repo Secrets.
-      #    → Settings › Secrets and variables › Actions
-      - name: Decode keystore
+      #    ONE-TIME SETUP — add this repo Secret:
+      #      Name : SIGNING_KEYSTORE_BASE64
+      #      Value: base64 of your .jks file
+      #
+      #    How to generate the value:
+      #      Linux : base64 -w 0 release-key.jks
+      #      macOS : base64 -i release-key.jks
+      - name: Decode keystore from secret
         run: |
           echo "${{ secrets.SIGNING_KEYSTORE_BASE64 }}" | base64 --decode > keystore.jks
-          echo "✅ keystore.jks written"
+          echo "keystore.jks decoded ($(wc -c < keystore.jks) bytes)"
 
-      # ── 5. Inject signing config via local.properties ──────
-      - name: Write signing config
+      # ── 5. Patch app/build.gradle — inject signingConfigs ──
+      #    The original build.gradle has no signingConfigs block.
+      #    This step adds one that reads from local.properties.
+      - name: Patch app/build.gradle with signingConfigs
+        run: |
+          python3 - << 'EOF'
+          import re, sys
+
+          path = "app/build.gradle"
+          text = open(path).read()
+
+          signing_block = '''
+              signingConfigs {
+                  release {
+                      def props = new Properties()
+                      def f = rootProject.file("local.properties")
+                      if (f.exists()) props.load(f.newDataInputStream())
+                      storeFile     props.storeFile     ? file(props.storeFile)     : null
+                      storePassword props.storePassword ?: ""
+                      keyAlias      props.keyAlias      ?: ""
+                      keyPassword   props.keyPassword   ?: ""
+                  }
+              }
+          '''
+
+          if "signingConfigs" in text:
+              print("signingConfigs already present, skipping patch")
+              sys.exit(0)
+
+          # Insert before buildTypes block
+          text = text.replace("    buildTypes {", signing_block + "\n    buildTypes {")
+
+          # Wire signingConfig into the release buildType
+          text = re.sub(
+              r'(release\s*\{)',
+              r'\1\n            signingConfig signingConfigs.release',
+              text
+          )
+
+          open(path, "w").write(text)
+          print("app/build.gradle patched with signingConfigs")
+          EOF
+
+      # ── 6. Write signing credentials to local.properties ───
+      - name: Write signing config to local.properties
         run: |
           {
             echo "storeFile=$(pwd)/keystore.jks"
@@ -101,76 +153,83 @@ jobs:
             echo "keyPassword=${{ github.event.inputs.key_password }}"
           } >> local.properties
 
-      # ── 6a. Build APK ──────────────────────────────────────
+      # ── 7a. Build signed APK ───────────────────────────────
       - name: Build signed APK
         if: ${{ github.event.inputs.build_type == 'APK' || github.event.inputs.build_type == 'APK + AAB' }}
-        run: ./gradlew :${{ github.event.inputs.module_name }}:assembleRelease
+        run: |
+          ./gradlew :app:assembleRelease \
+            --no-daemon \
+            --stacktrace \
+            -Pandroid.injected.signing.store.file="$(pwd)/keystore.jks" \
+            -Pandroid.injected.signing.store.password="${{ github.event.inputs.store_password }}" \
+            -Pandroid.injected.signing.key.alias="${{ github.event.inputs.key_alias }}" \
+            -Pandroid.injected.signing.key.password="${{ github.event.inputs.key_password }}"
 
-      # ── 6b. Build AAB ──────────────────────────────────────
+      # ── 7b. Build signed AAB ───────────────────────────────
       - name: Build signed AAB
         if: ${{ github.event.inputs.build_type == 'AAB' || github.event.inputs.build_type == 'APK + AAB' }}
-        run: ./gradlew :${{ github.event.inputs.module_name }}:bundleRelease
+        run: |
+          ./gradlew :app:bundleRelease \
+            --no-daemon \
+            --stacktrace \
+            -Pandroid.injected.signing.store.file="$(pwd)/keystore.jks" \
+            -Pandroid.injected.signing.store.password="${{ github.event.inputs.store_password }}" \
+            -Pandroid.injected.signing.key.alias="${{ github.event.inputs.key_alias }}" \
+            -Pandroid.injected.signing.key.password="${{ github.event.inputs.key_password }}"
 
-      # ── 7. Rename output files with custom app name ────────
+      # ── 8a. Rename APK ─────────────────────────────────────
       - name: Rename APK
         if: ${{ github.event.inputs.build_type == 'APK' || github.event.inputs.build_type == 'APK + AAB' }}
         run: |
-          APK_PATH=$(find ${{ github.event.inputs.module_name }}/build/outputs/apk/release -name "*.apk" | head -1)
-          if [ -n "$APK_PATH" ]; then
-            DIR=$(dirname "$APK_PATH")
-            mv "$APK_PATH" "$DIR/${{ github.event.inputs.app_name }}.apk"
-            echo "📦 APK renamed to ${{ github.event.inputs.app_name }}.apk"
-          else
-            echo "❌ APK not found!" && exit 1
-          fi
+          SRC=$(find app/build/outputs/apk/release -name "*.apk" | head -1)
+          [ -n "$SRC" ] || { echo "APK not found after build"; exit 1; }
+          DEST="app/build/outputs/apk/release/${{ github.event.inputs.app_name }}.apk"
+          mv "$SRC" "$DEST"
+          echo "APK: $(du -sh $DEST)"
 
+      # ── 8b. Rename AAB ─────────────────────────────────────
       - name: Rename AAB
         if: ${{ github.event.inputs.build_type == 'AAB' || github.event.inputs.build_type == 'APK + AAB' }}
         run: |
-          AAB_PATH=$(find ${{ github.event.inputs.module_name }}/build/outputs/bundle/release -name "*.aab" | head -1)
-          if [ -n "$AAB_PATH" ]; then
-            DIR=$(dirname "$AAB_PATH")
-            mv "$AAB_PATH" "$DIR/${{ github.event.inputs.app_name }}.aab"
-            echo "📦 AAB renamed to ${{ github.event.inputs.app_name }}.aab"
-          else
-            echo "❌ AAB not found!" && exit 1
-          fi
+          SRC=$(find app/build/outputs/bundle/release -name "*.aab" | head -1)
+          [ -n "$SRC" ] || { echo "AAB not found after build"; exit 1; }
+          DEST="app/build/outputs/bundle/release/${{ github.event.inputs.app_name }}.aab"
+          mv "$SRC" "$DEST"
+          echo "AAB: $(du -sh $DEST)"
 
-      # ── 8. Upload APK artifact ─────────────────────────────
-      - name: Upload APK
+      # ── 9a. Upload APK ─────────────────────────────────────
+      - name: Upload APK artifact
         if: ${{ github.event.inputs.build_type == 'APK' || github.event.inputs.build_type == 'APK + AAB' }}
         uses: actions/upload-artifact@v4
         with:
           name: "${{ github.event.inputs.app_name }}-APK"
-          path: "${{ github.event.inputs.module_name }}/build/outputs/apk/release/${{ github.event.inputs.app_name }}.apk"
+          path: "app/build/outputs/apk/release/${{ github.event.inputs.app_name }}.apk"
           retention-days: 30
 
-      # ── 9. Upload AAB artifact ─────────────────────────────
-      - name: Upload AAB
+      # ── 9b. Upload AAB ─────────────────────────────────────
+      - name: Upload AAB artifact
         if: ${{ github.event.inputs.build_type == 'AAB' || github.event.inputs.build_type == 'APK + AAB' }}
         uses: actions/upload-artifact@v4
         with:
           name: "${{ github.event.inputs.app_name }}-AAB"
-          path: "${{ github.event.inputs.module_name }}/build/outputs/bundle/release/${{ github.event.inputs.app_name }}.aab"
+          path: "app/build/outputs/bundle/release/${{ github.event.inputs.app_name }}.aab"
           retention-days: 30
 
-      # ── 10. Cleanup keystore (always) ─────────────────────
+      # ── 10. Cleanup (always) ───────────────────────────────
       - name: Remove keystore
         if: always()
-        run: |
-          rm -f keystore.jks
-          echo "🧹 keystore.jks removed"
+        run: rm -f keystore.jks && echo "keystore.jks removed"
 
-      # ── 11. Print summary ──────────────────────────────────
+      # ── 11. Summary ────────────────────────────────────────
       - name: Build summary
         if: success()
         run: |
-          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          echo "  ✅  Build complete!"
-          echo "  📦  App name  : ${{ github.event.inputs.app_name }}"
-          echo "  🏗️  Module    : ${{ github.event.inputs.module_name }}"
-          echo "  📤  Output    : ${{ github.event.inputs.build_type }}"
-          echo "  ☕  Java      : ${{ github.event.inputs.java_version }}"
-          echo "  🔑  Key alias : ${{ github.event.inputs.key_alias }}"
-          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          echo "Download artifacts from the Actions run page."
+          echo "========================================"
+          echo "  Build complete!"
+          echo "  App      : Lucent GK  (com.my.gk)"
+          echo "  Output   : ${{ github.event.inputs.app_name }}"
+          echo "  Type     : ${{ github.event.inputs.build_type }}"
+          echo "  Alias    : ${{ github.event.inputs.key_alias }}"
+          echo "  Java 17  |  compileSdk 34  |  AGP 8.12.0"
+          echo "  Download: Actions run page -> Artifacts"
+          echo "========================================"
