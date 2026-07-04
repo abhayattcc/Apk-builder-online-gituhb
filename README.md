@@ -1,145 +1,121 @@
-# 📱 HTML → Signed APK/AAB Builder
+# Odia Voice Clone — Piper TTS (Android-only workflow)
 
-Auto-build a signed Android APK or AAB from any `index.html` or `index.zip` using GitHub Actions. No Android Studio needed — just fill in prompts in the browser.
+Clone your own voice in Odia and produce a `.onnx` + `.onnx.json` Piper voice model,
+driven entirely from an Android phone. No PC required.
 
----
+## Why this shape
 
-## 🚀 How to Use
+Piper voice training needs a GPU. GitHub Actions' free runners are CPU-only, so they
+can't do the actual training in reasonable time. GitHub is used here for:
+- Storing your dataset + scripts (repo)
+- Validating your recordings automatically (CI, runs on every push)
+- Packaging the final release
 
-### Step 1 — Set up the repository
+**Kaggle Notebooks** (free, 30 GPU-hrs/week, works in a phone browser) does the
+actual training. You trigger it manually from your phone by opening the notebook
+and tapping "Run All" — no PC involved anywhere.
 
-```
-your-repo/
-├── .github/
-│   └── workflows/
-│       └── build-apk.yml     ← the workflow file
-├── index.html                ← your web app (OR index.zip)
-└── README.md
-```
-
-Upload either:
-- **`index.html`** — single file app
-- **`index.zip`** — multi-file app (HTML + CSS + JS + assets)
-
----
-
-### Step 2 — Trigger the build
-
-1. Go to your GitHub repo → **Actions** tab
-2. Click **"🚀 Build Signed APK / AAB from HTML"**
-3. Click **"Run workflow"**
-4. Fill in the prompts:
-
-| Prompt | Example | Description |
-|--------|---------|-------------|
-| 📱 App Name | `Picture Dictionary` | Display name on phone |
-| 📦 Package Name | `com.abhay.dictionary` | Unique app ID (reverse domain) |
-| 🔢 Version Name | `1.0.0` | Human-readable version |
-| 🔢 Version Code | `1` | Integer, increment each release |
-| 📦 Build Type | `APK` / `AAB` / `BOTH` | APK = sideload, AAB = Play Store |
-| 📱 Min SDK | `21` | Android 5.0+ recommended |
-| 📐 Orientation | `unspecified` / `portrait` / `landscape` | Screen lock |
-| 🎨 Theme Color | `#ff6f61` | App icon background color |
-| 🔑 Keystore Password | `mypass123` | Min 6 characters |
-| 🔑 Key Alias | `mykey` | Name for your signing key |
-| 🔑 Key Password | `mypass123` | Can be same as keystore password |
-| 📅 Validity Years | `25` | How long the key is valid |
-| 👤 Certificate CN | `Your Name` | Your name or organization |
-
-5. Click **"Run workflow"** → wait ~5–10 minutes
-6. Download signed APK/AAB from the **Artifacts** section ✅
-
----
-
-### Step 3 — Auto-build on push (optional)
-
-The workflow also auto-triggers whenever you push a new `index.html` or `index.zip`.  
-For auto-builds, store your keystore credentials as **GitHub Secrets**:
-
-Go to **Settings → Secrets and variables → Actions → New repository secret**:
-
-| Secret Name | Value |
-|-------------|-------|
-| `KEYSTORE_PASSWORD` | your keystore password |
-| `KEY_PASSWORD` | your key password |
-
----
-
-## 🔒 Keystore Tips
-
-> **IMPORTANT:** Save your keystore credentials safely!  
-> If you lose them, you cannot update your app on Play Store.
-
-- Use the same keystore for all future updates of the same app
-- After first build, download the `keystore.jks` from the build logs or store the credentials in GitHub Secrets
-- For Play Store: use **AAB** format
-- For direct install / sideloading: use **APK** format
-
----
-
-## ⚙️ What the Workflow Does
+## Full pipeline
 
 ```
-index.html / index.zip
-        ↓
-  Extract web assets
-        ↓
-  Generate app icon (from theme color)
-        ↓
-  Create Android project
-  (WebView wraps your HTML)
-        ↓
-  Generate signing keystore
-        ↓
-  Gradle build (release)
-        ↓
-  Signed APK / AAB output
-        ↓
-  Upload as GitHub Artifact ✅
+[Android: record voice] 
+        │
+        ▼
+[Android: GitHub app / termux / mobile browser → push to repo]
+        │
+        ▼
+[GitHub Actions: validates dataset on push] ← runs automatically
+        │
+        ▼
+[Kaggle Notebook: pulls repo, fine-tunes Piper] ← you tap "Run All" from phone
+        │
+        ▼
+[odia.onnx + odia.onnx.json] → download to phone
 ```
 
----
+## Step-by-step
 
-## 🌐 Supported HTML Features
+### 1. Record your voice (on Android)
+- Use any recorder app that can save **WAV, 22050 Hz, mono, 16-bit**
+  (e.g. "RecForge II", "Easy Voice Recorder" with WAV export set manually in settings).
+- Record 100–300 short Odia sentences. More = better clone. 300+ is noticeably
+  better than 100.
+- Keep each clip to one sentence, minimal background noise, consistent mic distance.
+- Name files `wav_0001.wav`, `wav_0002.wav`, ... in order (see `dataset/metadata.csv`).
 
-Your HTML app has full access to:
+### 2. Build metadata.csv
+Format (pipe-separated, LJSpeech-style), one line per clip:
+```
+wav_0001|ଆପଣ କେମିତି ଅଛନ୍ତି
+wav_0002|ମୋର ନାଁ ଅଲେକ୍ସ
+```
+Use any Android text editor (or Google Keep → export as .txt → rename to .csv).
+See `dataset/metadata.csv` for a starter template with ~20 common Odia sentences
+you can read and replace/extend.
 
-| Feature | Support |
-|---------|---------|
-| JavaScript | ✅ Full |
-| Web Speech API | ✅ (mic permission included) |
-| File Upload | ✅ (file chooser built-in) |
-| File Download | ✅ |
-| LocalStorage / IndexedDB | ✅ |
-| SQL.js / WASM | ✅ |
-| PDF.js | ✅ |
-| External CDN scripts | ✅ (internet permission included) |
-| Camera / Mic | ✅ (permissions included) |
+### 3. Push to GitHub (from Android)
+Options, no PC needed:
+- **GitHub mobile app**: can create files/commits directly but bulk WAV upload is
+  clunky through it.
+- **Working Copy (iOS) / MGit or Termux+git (Android)**: better for bulk file
+  upload. Termux is the most reliable:
+  ```bash
+  pkg install git
+  git clone https://github.com/<you>/odia-voice-clone.git
+  cp /sdcard/Recordings/*.wav odia-voice-clone/dataset/wavs/
+  cd odia-voice-clone
+  git add .
+  git commit -m "Add recordings"
+  git push
+  ```
+- Or zip the wavs on-device and upload via GitHub's web uploader (mobile Chrome
+  supports drag-and-drop / file picker for repo uploads, handles zips if you
+  unzip first — GitHub web UI doesn't auto-extract, so upload the individual
+  wav files or use Termux instead for anything beyond a few dozen files).
 
----
+### 4. Let CI validate
+On every push, `.github/workflows/validate-dataset.yml` runs automatically and checks:
+- Every wav in metadata.csv actually exists
+- Sample rate / channel / bit depth are correct
+- No empty transcripts
+- Reports total recorded duration
 
-## 📦 Package Name Rules
+Check the **Actions** tab in the GitHub mobile app or mobile browser after pushing.
+Fix anything it flags before training — garbage in, garbage voice out.
 
-- Must be unique (like a reverse domain name)
-- Only letters, numbers, and dots
-- At least 2 segments: `com.yourname.appname`
-- Examples:
-  - `com.abhay.dictionary`
-  - `in.myschool.quizapp`
-  - `org.myproject.tool`
+### 5. Train on Kaggle (from phone browser)
+1. Go to kaggle.com on your phone, sign in, create a new Notebook.
+2. Turn on GPU: Notebook settings → Accelerator → GPU T4 x2 (or similar).
+3. Copy the contents of `scripts/kaggle_train.py` into a notebook cell
+   (it's written to run top-to-bottom as one script).
+4. Edit the `GITHUB_REPO` variable at the top to point to your repo.
+5. Tap **Run All**. Training runs in Kaggle's cloud — your phone just needs to
+   stay on the page long enough to start it; Kaggle continues running the
+   session even if you background the browser tab (session persists on their
+   servers for a while, but don't fully close the notebook until it's done for
+   the first run so you can watch for errors).
+6. When done, the script zips `odia.onnx` + `odia.onnx.json` into
+   `/kaggle/working/output.zip` — download it via Kaggle's Output panel.
 
----
+### 6. Use your voice model
+Copy `odia.onnx` + `odia.onnx.json` onto your phone (Kaggle → Download).
+Load them with `sherpa-onnx` or Piper's Android runtime in your app — this
+plugs directly into the TTS work you've already been doing (Piper ONNX +
+`odiaToIpa()` phoneme mapping) for the Odia TTS app.
 
-## ❓ FAQ
+## Files in this project
 
-**Q: Can I update the app later?**  
-A: Yes — use the same Package Name, increment Version Code, and use the same keystore credentials.
+- `dataset/metadata.csv` — transcript template, LJSpeech format
+- `dataset/wavs/` — put your recordings here
+- `scripts/kaggle_train.py` — the actual fine-tuning script, run on Kaggle
+- `scripts/validate_dataset.py` — checks used by CI, also runnable manually
+- `.github/workflows/validate-dataset.yml` — auto-runs validation on push
 
-**Q: Can I publish to Play Store?**  
-A: Yes — choose **AAB** output and upload the `.aab` file.
+## Realistic expectations
 
-**Q: My zip has many files, will they all be included?**  
-A: Yes — all files inside the zip are bundled into the app assets.
-
-**Q: Where is the keystore saved?**  
-A: It's generated fresh each build. For production apps, store `KS_PASSWORD` and `KEY_PASSWORD` as GitHub Secrets to reuse them.
+- 100 sentences: usable but noticeably synthetic/approximate clone.
+- 300+ sentences, clean audio, consistent recording conditions: good clone quality.
+- 1000+: approaching very natural output.
+- Training time on Kaggle T4 GPU for a fine-tune (not from scratch): roughly
+  1–4 hours depending on dataset size and epochs — fits well inside Kaggle's
+  free weekly GPU quota.
