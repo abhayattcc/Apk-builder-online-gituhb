@@ -5,11 +5,11 @@ on:
     branches:
       - main
     paths:
-      - "**/*.pdf"       # Triggers automatically when a PDF is pushed
-  workflow_dispatch:     # ADDED: Allows you to manually click "Run workflow" in GitHub
+      - "**/*.pdf"
+  workflow_dispatch: # This adds the manual "Run workflow" button
 
 permissions:
-  contents: write      # Needed to commit the output .txt back to the repo
+  contents: write
 
 jobs:
   convert:
@@ -27,37 +27,51 @@ jobs:
       - name: Install dependencies
         run: pip install pdfminer.six
 
-      - name: Convert all PDFs to Odia Unicode text
+      - name: Prepare Scripts
+        run: |
+          # Automatically fix the filename if it was uploaded with a space
+          if [ -f "odia convert.py" ]; then
+            echo "Renaming 'odia convert.py' to 'odia_convert.py'..."
+            mv "odia convert.py" odia_convert.py
+          fi
+          
+          # Verify the HTML file exists
+          if [ ! -f "convert.html" ]; then
+            echo "Error: convert.html is missing. Please ensure it is in the root directory."
+            exit 1
+          fi
+
+      - name: Convert PDFs
         run: |
           set -e
           
-          # Check if any PDFs exist before trying to loop
+          # Check if PDFs exist
           pdf_count=$(find . -type f -name "*.pdf" | wc -l)
           if [ "$pdf_count" -eq 0 ]; then
-            echo "No PDF files found in the repository to convert."
+            echo "No PDF files found to convert."
             exit 0
           fi
 
-          # Safely find and convert PDFs (handles spaces in filenames)
+          # Convert all PDFs, safely handling spaces in PDF names
           find . -type f -name "*.pdf" -print0 | while IFS= read -r -d '' pdf; do
             base="${pdf%.pdf}"
             out="${base}_unicode.txt"
-            echo "Converting: $pdf  ->  $out"
+            echo "Converting: $pdf -> $out"
             python3 odia_convert.py "$pdf" -o "$out"
           done
 
-      - name: Commit output txt files
+      - name: Commit Results
         run: |
-          git config user.name  "github-actions[bot]"
+          git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           
-          # Safely find and stage all generated text files
+          # Stage all generated text files safely
           find . -type f -name "*_unicode.txt" -exec git add {} +
           
-          # Only commit and push if there are actual changes
+          # Commit and push only if new files were created
           if ! git diff --cached --quiet; then
             git commit -m "Auto-convert PDF to Odia Unicode [skip ci]"
             git push
           else
-            echo "No new text conversions to commit."
+            echo "No new conversions to commit."
           fi
