@@ -1,0 +1,51 @@
+name: Convert Odia PDF to Unicode
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "**.pdf"       # triggers whenever any PDF is pushed/changed
+
+permissions:
+  contents: write      # needed to commit the output .txt back to the repo
+
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Check out the repo (full history so we can commit back)
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Set up Python
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # 3. Install pdfminer.six (only dependency)
+      - name: Install dependencies
+        run: pip install pdfminer.six
+
+      # 4. Find every PDF in the repo and convert it
+      - name: Convert all PDFs to Odia Unicode text
+        run: |
+          set -e
+          find . -name "*.pdf" | while read pdf; do
+            base="${pdf%.pdf}"
+            out="${base}_unicode.txt"
+            echo "Converting: $pdf  ->  $out"
+            python3 odia_convert.py "$pdf" -o "$out"
+          done
+
+      # 5. Commit the generated .txt files back to main
+      - name: Commit output txt files
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add "*_unicode.txt"
+          # Only commit if there is something new / changed
+          git diff --cached --quiet || git commit -m "Auto-convert PDF to Odia Unicode [skip ci]"
+          git push
