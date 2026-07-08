@@ -1,4 +1,4 @@
-name: Generate Odia OCR Text
+name: Generate Advanced Odia/Eng OCR Text
 
 on:
   push:
@@ -7,13 +7,13 @@ on:
     paths:
       - '**.pdf'
       - 'converter.py'
-  workflow_dispatch: # Allows manual triggering from the Actions tab
+  workflow_dispatch: 
 
 jobs:
   ocr-process:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # Required to push the new text files back to the repo
+      contents: write 
 
     steps:
       - name: Checkout Repository
@@ -26,20 +26,25 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Install System Dependencies (Tesseract, Odia Pack, & Poppler)
+      - name: Install System Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y tesseract-ocr tesseract-ocr-ori poppler-utils
+          sudo apt-get install -y tesseract-ocr poppler-utils libgl1
+
+      - name: Download Advanced 'tessdata_best' Models
+        run: |
+          sudo wget -O /usr/share/tesseract-ocr/4.00/tessdata/ori.traineddata https://github.com/tesseract-ocr/tessdata_best/raw/main/ori.traineddata
+          sudo wget -O /usr/share/tesseract-ocr/4.00/tessdata/eng.traineddata https://github.com/tesseract-ocr/tessdata_best/raw/main/eng.traineddata
 
       - name: Install Python Dependencies
         run: |
-          pip install pytesseract pdf2image
+          pip install pytesseract pdf2image opencv-python-headless numpy
 
-      - name: Run Python OCR Converter
+      - name: Run Advanced OCR Converter
         run: python converter.py
 
       - name: Commit and Push OCR Text Files
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "chore: Auto-generate Odia OCR text files [skip ci]"
+          commit_message: "chore: Auto-generate high-accuracy Odia/Eng OCR [skip ci]"
           file_pattern: '*_ocr.txt'
