@@ -1,10 +1,10 @@
 import re
 import os
 import glob
-import fitz  # PyMuPDF, install via: pip install PyMuPDF
+import fitz  # PyMuPDF
 
 # ====================================================
-# Corrected Akruti Array Mapping
+# Corrected Akruti Array Mapping (With Hex/Space Fixes)
 # ====================================================
 TEXT_ARRAY = [
     " û", " ।", "ö" , " ।", "÷÷÷", "", 
@@ -27,7 +27,7 @@ TEXT_ARRAY = [
     
     # --- THE SPACE LOGIC FIXES ---
     "*" , "ଞ୍ଚ", 
-    "\x8d", "ଞ୍ଚ", # Fixed: Replaced literal space with correct Hex 0x8D
+    "\x8d", "ଞ୍ଚ", # Replaced literal space with correct Hex 0x8D
     
     "î" , "୍ରୁ", "ï" , "୍ରୂ", "Ð" , "କ୍ଷ୍ଣ", 
     "Ñ" , "୍କ", "Ò" , "୍ଖ", "Ó" , "୍ଗ", 
@@ -37,7 +37,7 @@ TEXT_ARRAY = [
     "Ý" , "୍ପ", "Þ" , "୍ଫ", "ß" , "୍ୱ", 
     
     "<" , "ଣ୍ଟ", 
-    "\x8f", "ଣ୍ଟ", # Fixed: Replaced literal space with correct Hex 0x8F
+    "\x8f", "ଣ୍ଟ", # Replaced literal space with correct Hex 0x8F
     
     "…" , "ଟ୍ଟ", "μ" , "ମ୍ପ", "µ" , "ମ୍ପ", 
     "¶" , "ମ୍ଫ", "‰" , "ଣ୍ଣ", "Š" , "ଣ୍ଡ", 
@@ -48,7 +48,7 @@ TEXT_ARRAY = [
     "¦" , "ନ୍ଦ", "§" , "ନ୍ଧ", 
     
     "©" , "ତ୍ତ", 
-    "\x90", "ତ୍ତ", # Fixed: Replaced literal space with correct Hex 0x90
+    "\x90", "ତ୍ତ", # Replaced literal space with correct Hex 0x90
     
     "ª" , "ନ୍ତ୍ର", "«" , "ନ୍ତ", "¬" , "ଞ୍ଜ", 
     "ƒ" , "ଞ୍ଝ", "®" , "ପ୍ପ", "¯" , "ପ୍ତ", 
@@ -63,7 +63,7 @@ TEXT_ARRAY = [
     "Ì" , "ଳ୍ପ", "Í" , "ଳ୍ଫ", 
     
     "Î" , "ତ୍ଥ", 
-    "\x9d", "ତ୍ଥ", # Fixed: Replaced literal space with correct Hex 0x9D
+    "\x9d", "ତ୍ଥ", # Replaced literal space with correct Hex 0x9D
     
     "Ï" , "ଳ୍ଳ", "@ା" , "ଆ", "@" , "ଅ", 
     "A" , "ଇ", "B" , "ଈ", "C" , "ଉ", 
@@ -88,7 +88,6 @@ TEXT_ARRAY = [
     "y" , "ଚ୍ଚ", "z" , "ଚ୍ଛ", 
     
     # --- PDF COMBINING MARK FIXES ---
-    # In PDFs, characters are sometimes extracted as Space + a Unicode combining mark.
     " \u0304", "ପ୍ତ", # " ̄" (Space + Macron)
     " \u0301", "ମ୍ବ", # " ́" (Space + Acute)
     " \u0327", "ମ୍ଭ", # " ̧" (Space + Cedilla)
@@ -99,7 +98,36 @@ TEXT_ARRAY = [
 ]
 
 # ====================================================
-# Text Conversion Engine
+# Build Reverse Pairs (Unicode -> Akruti)
+# ====================================================
+def build_reverse_pairs():
+    seen = {}
+    pairs = []
+    for i in range(0, len(TEXT_ARRAY) - 1, 2):
+        akruti = TEXT_ARRAY[i]
+        unicode_val = TEXT_ARRAY[i + 1]
+        if not unicode_val:
+            continue
+        if unicode_val in seen:
+            continue
+        seen[unicode_val] = True
+        pairs.extend([unicode_val, akruti])
+        
+    entries = []
+    for j in range(0, len(pairs) - 1, 2):
+        entries.append((pairs[j], pairs[j + 1]))
+        
+    entries.sort(key=lambda x: len(x[0]), reverse=True)
+    
+    ordered = []
+    for e in entries:
+        ordered.extend([e[0], e[1]])
+    return ordered
+
+REVERSE_PAIRS = build_reverse_pairs()
+
+# ====================================================
+# Akruti -> Unicode Odia Logic
 # ====================================================
 def convert_to_unicode_odia(input_str):
     if not input_str:
@@ -108,18 +136,17 @@ def convert_to_unicode_odia(input_str):
     modified_substring = input_str
 
     if modified_substring != "":
-        # 1. Base Array Replacements (mimicking the exact JS While-Loop behavior)
+        # 1. Base Array Replacements
         for i in range(0, len(TEXT_ARRAY) - 1, 2):
             target = TEXT_ARRAY[i]
             replacement = TEXT_ARRAY[i + 1]
             while target in modified_substring:
                 modified_substring = modified_substring.replace(target, replacement)
                 
-        # 2. Re-order Maatraas (e, ai, o, au)
+        # 2. Re-order Maatraas
         modified_substring = re.sub(r'([ù])([କଖଗଘଙଚଛଜଝଞଟଠଡଡ଼ଢଢ଼ଣତଥଦଧନପଫବଭମଯୟରଲବୱଶଷସହକ୍ଷଡ଼ଳ])', r'\2\1', modified_substring)
         modified_substring = re.sub(r'([ù])([୍])([କଖଗଘଚଛଜଝଟଠଡଡ଼ଢଢ଼ଣତଥନପଫବଭମୟରଲବୱଶଷସହକ୍ଷଡ଼ଳ])', r'\2\3\1', modified_substring)
         modified_substring = re.sub(r'([ù])([୍])([କଖଗଘଚଛଜଝଟଠଡଡ଼ଢଢ଼ଣତଥନପଫବଭମୟରଲବୱଶଷସହକ୍ଷଡ଼ଳ])', r'\2\3\1', modified_substring)
-        
         modified_substring = modified_substring.replace("ùø", "ୌ")
         modified_substring = modified_substring.replace("ùା", "ୋ")
         modified_substring = modified_substring.replace("ù÷", "ୈ")
@@ -133,7 +160,6 @@ def convert_to_unicode_odia(input_str):
         modified_substring = re.sub(rf'({reph_chars})([୍])à', r'ð\1\2', modified_substring)
         modified_substring = re.sub(rf'({reph_chars})([୍])ð', r'ð\1\2', modified_substring)
         modified_substring = modified_substring.replace("ð", "ର୍")
-        
         modified_substring = re.sub(r'([ଂଁ])([ାିୀୁୂୃେୈୋୌ])', r'\2\1', modified_substring)
 
         # 4. Fix Matra before Halanta
@@ -143,9 +169,27 @@ def convert_to_unicode_odia(input_str):
     return modified_substring
 
 # ====================================================
-# PDF Extractor
+# Unicode Odia -> Akruti Logic
 # ====================================================
-def process_pdf(pdf_path, output_txt_path):
+def convert_to_akruti(input_str):
+    if not input_str:
+        return input_str
+
+    modified_substring = input_str
+
+    if modified_substring != "":
+        for i in range(0, len(REVERSE_PAIRS) - 1, 2):
+            target = REVERSE_PAIRS[i]
+            replacement = REVERSE_PAIRS[i + 1]
+            while target in modified_substring:
+                modified_substring = modified_substring.replace(target, replacement)
+
+    return modified_substring
+
+# ====================================================
+# Font-Aware PDF Extractor
+# ====================================================
+def process_pdf(pdf_path, output_txt_path, direction="toUnicode"):
     try:
         doc = fitz.open(pdf_path)
     except Exception as e:
@@ -154,28 +198,62 @@ def process_pdf(pdf_path, output_txt_path):
 
     converted_pages = []
     
+    # Common English fonts to ignore during conversion
+    ENGLISH_FONTS = [
+        'arial', 'times', 'helvetica', 'calibri', 'courier', 
+        'cambria', 'georgia', 'tahoma', 'verdana', 'segoe', 'roboto'
+    ]
+    
     for i in range(len(doc)):
         page = doc.load_page(i)
         
-        # We extract block-by-block to preserve the visual reading order
-        blocks = page.get_text("blocks")
-        blocks.sort(key=lambda b: (b[1], b[0]))
+        # Read text span-by-span to identify fonts
+        page_dict = page.get_text("dict")
+        if "blocks" not in page_dict:
+            continue
+            
+        blocks = page_dict["blocks"]
+        
+        # Sort vertically then horizontally
+        blocks.sort(key=lambda b: (b.get("bbox", [0,0,0,0])[1], b.get("bbox", [0,0,0,0])[0]))
         
         page_text = ""
         for b in blocks:
-            text = b[4]
-            page_text += text + "\n"
+            if b.get("type") == 0:  # Type 0 = Text
+                for line in b["lines"]:
+                    for span in line["spans"]:
+                        raw_text = span["text"]
+                        font_name = span["font"].lower()
+                        
+                        is_english = any(eng_font in font_name for eng_font in ENGLISH_FONTS)
+                        is_legacy = any(leg_font in font_name for leg_font in ['akruti', 'sarala', 'ori'])
+                        
+                        # Apply conversion ONLY if it's not a standard English font
+                        if is_english and not is_legacy:
+                            page_text += raw_text
+                        else:
+                            if direction == "toAkruti":
+                                page_text += convert_to_akruti(raw_text)
+                            else:
+                                page_text += convert_to_unicode_odia(raw_text)
+                                
+                    page_text += "\n"
+                page_text += "\n"
         
-        converted = convert_to_unicode_odia(page_text)
-        converted_pages.append(converted.strip())
+        converted_pages.append(page_text.strip())
+        print(f"Processed page {i+1} / {len(doc)}")
 
+    # Save cleanly to text file
     with open(output_txt_path, "w", encoding="utf-8") as f:
         f.write("\n\n--- Page Break ---\n\n".join(converted_pages))
     
     print(f"✅ Successfully converted: {output_txt_path}")
 
-# Auto-run for all PDFs in the folder
+# ====================================================
+# GitHub Actions / Local Run Trigger
+# ====================================================
 if __name__ == "__main__":
     for pdf_file in glob.glob('*.pdf'):
         txt_name = pdf_file.replace('.pdf', '.txt')
-        process_pdf(pdf_file, txt_name)
+        print(f"Starting conversion for: {pdf_file}")
+        process_pdf(pdf_file, txt_name, direction="toUnicode")
