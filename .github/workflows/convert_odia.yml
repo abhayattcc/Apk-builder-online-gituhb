@@ -5,7 +5,8 @@ on:
     branches:
       - main
     paths:
-      - "**/*.pdf"       # Fixed: Standard glob to catch PDFs in all subdirectories
+      - "**/*.pdf"       # Triggers automatically when a PDF is pushed
+  workflow_dispatch:     # ADDED: Allows you to manually click "Run workflow" in GitHub
 
 permissions:
   contents: write      # Needed to commit the output .txt back to the repo
@@ -15,34 +16,29 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Check out the repo (full history so we can commit back)
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. Set up Python
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      # 3. Install pdfminer.six (only dependency)
       - name: Install dependencies
         run: pip install pdfminer.six
 
-      # 4. Handle HTML filename mismatch
-      # The python script requires "convert.html", but the repo might have "convert-1-2.html"
-      - name: Ensure convert.html exists
-        run: |
-          if [ -f "convert-1-2.html" ] && [ ! -f "convert.html" ]; then
-            echo "Copying convert-1-2.html to convert.html for the Python script..."
-            cp convert-1-2.html convert.html
-          fi
-
-      # 5. Find every PDF in the repo and convert it
       - name: Convert all PDFs to Odia Unicode text
-        # Fixed: Using -print0 and read -d '' safely processes filenames with spaces
         run: |
           set -e
+          
+          # Check if any PDFs exist before trying to loop
+          pdf_count=$(find . -type f -name "*.pdf" | wc -l)
+          if [ "$pdf_count" -eq 0 ]; then
+            echo "No PDF files found in the repository to convert."
+            exit 0
+          fi
+
+          # Safely find and convert PDFs (handles spaces in filenames)
           find . -type f -name "*.pdf" -print0 | while IFS= read -r -d '' pdf; do
             base="${pdf%.pdf}"
             out="${base}_unicode.txt"
@@ -50,14 +46,13 @@ jobs:
             python3 odia_convert.py "$pdf" -o "$out"
           done
 
-      # 6. Commit the generated .txt files back to main
       - name: Commit output txt files
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           
-          # Fixed: Use find to safely stage the generated files, avoiding pathspec errors
-          find . -name "*_unicode.txt" -exec git add {} +
+          # Safely find and stage all generated text files
+          find . -type f -name "*_unicode.txt" -exec git add {} +
           
           # Only commit and push if there are actual changes
           if ! git diff --cached --quiet; then
