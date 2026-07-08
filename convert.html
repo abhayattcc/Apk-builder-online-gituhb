@@ -259,15 +259,39 @@ function postprocess(inputStr) {
     return modified;
 }
 
+// =========================================================================
+// FORWARD (Akruti -> Unicode) PAIRS, DEDUPLICATED & LONGEST-KEY-FIRST
+// Without longest-match-first ordering, short keys (e.g. single-char "û")
+// can fire before longer keys that contain them (e.g. "@û"), corrupting
+// output. This mirrors the ordering already used for reverse_pairs below,
+// and removes the order-dependent bug that caused mismapped characters.
+// =========================================================================
+const forward_pairs = (function buildForwardPairs() {
+    var seen = Object.create(null);
+    var entries = [];
+    for (var i = 0; i < text_array.length - 1; i += 2) {
+        var akruti = text_array[i];
+        var unicode = text_array[i + 1];
+        if (akruti === "" || akruti === undefined) continue;
+        if (seen[akruti] !== undefined) continue; // keep first occurrence
+        seen[akruti] = unicode;
+        entries.push([akruti, unicode]);
+    }
+    entries.sort(function(a, b) { return b[0].length - a[0].length; });
+    var ordered = [];
+    entries.forEach(function(e) { ordered.push(e[0], e[1]); });
+    return ordered;
+})();
+
 function convertToUnicodeOdia(inputStr) {
     if (!inputStr) return inputStr;
     
     var modified_substring = inputStr;
-    var text_array_length = text_array.length;
+    var pairs_length = forward_pairs.length;
 
     if ( modified_substring != "" ) {
-        for ( var i = 0; i < text_array_length - 1; i += 2 ) { 
-            modified_substring = modified_substring.split(text_array[i]).join(text_array[i+1]);
+        for ( var i = 0; i < pairs_length - 1; i += 2 ) { 
+            modified_substring = modified_substring.split(forward_pairs[i]).join(forward_pairs[i+1]);
         } 
 
         const cons = "କଖଗଘଙଚଛଜଝଞଟଠଡଡ଼ଢଢ଼ଣତଥଦଧନପଫବଭମଯୟରଲଳଵୱଶଷସହକ୍ଷଜ୍ଞ";
