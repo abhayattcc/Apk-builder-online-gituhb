@@ -5,10 +5,10 @@ on:
     branches:
       - main
     paths:
-      - "**.pdf"       # triggers whenever any PDF is pushed/changed
+      - "**/*.pdf"       # Fixed: Standard glob to catch PDFs in all subdirectories
 
 permissions:
-  contents: write      # needed to commit the output .txt back to the repo
+  contents: write      # Needed to commit the output .txt back to the repo
 
 jobs:
   convert:
@@ -29,23 +29,40 @@ jobs:
       - name: Install dependencies
         run: pip install pdfminer.six
 
-      # 4. Find every PDF in the repo and convert it
+      # 4. Handle HTML filename mismatch
+      # The python script requires "convert.html", but the repo might have "convert-1-2.html"
+      - name: Ensure convert.html exists
+        run: |
+          if [ -f "convert-1-2.html" ] && [ ! -f "convert.html" ]; then
+            echo "Copying convert-1-2.html to convert.html for the Python script..."
+            cp convert-1-2.html convert.html
+          fi
+
+      # 5. Find every PDF in the repo and convert it
       - name: Convert all PDFs to Odia Unicode text
+        # Fixed: Using -print0 and read -d '' safely processes filenames with spaces
         run: |
           set -e
-          find . -name "*.pdf" | while read pdf; do
+          find . -type f -name "*.pdf" -print0 | while IFS= read -r -d '' pdf; do
             base="${pdf%.pdf}"
             out="${base}_unicode.txt"
             echo "Converting: $pdf  ->  $out"
             python3 odia_convert.py "$pdf" -o "$out"
           done
 
-      # 5. Commit the generated .txt files back to main
+      # 6. Commit the generated .txt files back to main
       - name: Commit output txt files
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add "*_unicode.txt"
-          # Only commit if there is something new / changed
-          git diff --cached --quiet || git commit -m "Auto-convert PDF to Odia Unicode [skip ci]"
-          git push
+          
+          # Fixed: Use find to safely stage the generated files, avoiding pathspec errors
+          find . -name "*_unicode.txt" -exec git add {} +
+          
+          # Only commit and push if there are actual changes
+          if ! git diff --cached --quiet; then
+            git commit -m "Auto-convert PDF to Odia Unicode [skip ci]"
+            git push
+          else
+            echo "No new text conversions to commit."
+          fi
