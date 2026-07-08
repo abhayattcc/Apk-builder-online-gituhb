@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="author" content="Bk Graphy">
+    <meta name="Description" content="Akruti/Sarala to Unicode Odia Converter (Text & Database)">
+    <title>Akruti to Unicode Odia Converter & Database Processor</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    
+    <style>
+        body { font-family: sans-serif; background-color: #D3D3D3; margin: 20px; }
+        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        h2, h3 { color: #316E89; text-align: center; }
+        .section { margin-bottom: 40px; padding: 20px; border: 1px solid #ccc; border-radius: 5px; background: #fafafa; }
+        textarea { width: 100%; box-sizing: border-box; margin-bottom: 10px; padding: 10px; font-size: 16px; border: 1px solid #aaa; }
+        .btn { background-color: #4AAAD1; color: white; font-weight: bold; padding: 12px 24px; border: none; cursor: pointer; border-radius: 5px; transition: 0.3s; }
+        .btn:hover { background-color: #316E89; }
+        .table-group { background: #fff; padding: 15px; margin-bottom: 15px; border: 1px solid #ddd; border-left: 4px solid #4AAAD1; border-radius: 4px;}
+        .table-group h4 { margin-top: 0; color: #333; }
+        .warning-text { text-align: center; color: #d9534f; font-size: 14px; margin-bottom: 20px;}
+        .footer { text-align: center; font-size: 12px; color: #515151; margin-top: 20px; }
+        .dir-toggle { text-align: center; margin-bottom: 15px; }
+        .dir-option { display: inline-block; margin: 0 15px; font-size: 15px; cursor: pointer; }
+        .dir-option input { margin-right: 6px; }
+        .download-btn { background-color: #5cb85c; margin-left: 10px; }
+        .download-btn:hover { background-color: #449d44; }
+        .progress-wrap { display: none; margin: 15px 0; }
+        .progress-track { width: 100%; background: #e0e0e0; border-radius: 6px; height: 18px; overflow: hidden; }
+        .progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #4AAAD1, #316E89); transition: width 0.15s ease-out; }
+        .progress-label { text-align: center; font-size: 13px; color: #515151; margin-top: 6px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Akruti Sarala &harr; Unicode Odia Converter</h2>
+    
+    <div class="section">
+        <h3>1. Text Converter</h3>
+
+        <div class="dir-toggle">
+            <label class="dir-option">
+                <input type="radio" name="conv-dir" value="toUnicode" checked onchange="updateDirectionLabels()">
+                Akruti/Sarala &rarr; Unicode Odia
+            </label>
+            <label class="dir-option">
+                <input type="radio" name="conv-dir" value="toAkruti" onchange="updateDirectionLabels()">
+                Unicode Odia &rarr; Akruti/Sarala
+            </label>
+        </div>
+
+        <p style="text-align:center;" id="input-label">Copy Akruti/Sarala text and paste below, or upload a .txt/.pdf file to convert directly</p>
+
+        <div style="text-align: center; margin-bottom: 10px;">
+            <input type="file" id="file-upload" accept=".txt,text/plain,.pdf,application/pdf" onchange="loadUploadedFile(event)" style="font-size: 14px;" />
+            <span id="upload-status" style="font-size: 13px; color: #555; margin-left: 8px;"></span>
+        </div>
+
+        <textarea id="nonunicode_text" rows="6"></textarea>
+        <div style="text-align: center;">
+            <button class="btn" onclick="convert_text_area()" id="convert-btn">CONVERT TEXT</button>
+            <button class="btn download-btn" onclick="downloadConvertedText()">DOWNLOAD RESULT (.txt)</button>
+        </div>
+
+        <div class="progress-wrap" id="progress-wrap">
+            <div class="progress-track">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+            <div class="progress-label" id="progress-label">Converting… 0%</div>
+        </div>
+
+        <br>
+        <p style="text-align:center;" id="output-label">Converted Unicode Text:</p>
+        <textarea id="unicode_text" rows="6"></textarea>
+    </div>
+
+    <div class="section">
+        <h3>2. Database (.db / .sqlite) Converter</h3>
+        <p style="text-align:center;">Upload your SQLite database to securely analyze, convert specific columns, and download the updated DB locally.</p>
+        <p style="text-align:center; font-size: 13px; color: #555;">Uses the direction currently selected above (Akruti&rarr;Unicode or Unicode&rarr;Akruti).</p>
+        
+        <div style="text-align: center; margin: 20px 0;">
+            <input type="file" id="db-upload" accept=".db,.sqlite,.sqlite3" onchange="loadDatabase(event)" style="font-size: 16px;" />
+        </div>
+        
+        <div id="db-ui" style="display: none;">
+            <hr>
+            <h3 style="color: #4AAAD1; margin-top: 20px;">Analyze & Select Columns to Convert</h3>
+            <p class="warning-text"><strong>Warning:</strong> Only select columns containing Odia legacy text. Selecting standard English columns will convert English letters into Odia characters (e.g., 'K' becomes 'କ').</p>
+            
+            <div id="tables-container"></div>
+            
+            <div style="text-align: center; margin-top: 20px;">
+                <button class="btn" onclick="processAndDownloadDB()">CONVERT & DOWNLOAD DATABASE</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="footer">
+        Designed by Manoj Sahukar and Subhashish Panigrahi. Under CC-BY-SA 3.0. Inspired by Rebati converter.<br>
+        <em>Database upload & processing integration added by Gemini.</em>
+    </div>
+</div>
+
+<script type="text/javascript">
+const text_array = [
+" û", " ।", // purnacheda
+"ö" , " ।" , // purnacheda
+"÷÷÷", "", //
+// double accented - AkrutiOriSarala
+"£" , "୍ମ" , // ma phala
+"à" , "୍ମ" , // ma phala
+"á" , "୍ମୃ" , // (halanta)m-Rû
+"â" , "୍ର" , // ra
+"ã" , "୍ର" , // reph
+"ä" , "୍ଲ" , // la phala
+"å" , "୍ଭ" , // halanta- bha
+"æ" , "୍ଳ" , // halanta-La
+"ç" , "୍ୱ" , // ba phala
+"è" , "୍ସ" , // halanta-sa
+"ý", "୍ୟ" , // ja phala
+"¥", "୍ୟ" , // ja phala
+"ó", "ିଁ" , // i kara
+
+"Iß" , "ୱ", //wa
+"Wÿ" , "ଡ଼" , // Da with bindu
+"Xÿ" , "ଢ଼" , // Dha with bindu
+"Pÿ" , "ଚ" , // c
+"[ô" , "ଥି" , // thi
+"]ô" , "ଧି" , // dhi
+"Lô" , "ଖି" , // khi
+"cô", "ତ୍ମ" , // tma
+"_ô", "ତ୍ପ" , // tma
+
+"û" , "ା" , // aa kara
+"ò" , "ି" , // i kara
+"ú" , "ୀ" , // dirgha i kara
+"ê" , "ୁ" , // u kara
+"ë" , "ୁ" , // u kara
+"ì" , "ୂ" , // dirgha i kara
+"í" ,  "ୂ" , // dirgha u kara
+"é" , "ୃ" , // ru kara
+
+"ñ", "ଁ" , // chandrabindu
+"õ", "ଂ" , // anuswara
+"ü", "ଃ" , // bisarga
+"þ", "୍" , //halanta
+"¨", "୍‌" , // halanta with zero width non-joiner
+"1" , "୧" , // Numeric 1
+"2" , "୨" , // Numeric 2
+"3" , "୩" , // Numeric 3
+"4" , "୪" , // Numeric 4
+"5" , "୫" , // Numeric 5
+"6" , "୬" , // Numeric 6
+"7" , "୭" , // Numeric 7
+"8" , "୮" , // Numeric 8
+"9" , "୯" , // Numeric 9
+"0" , "୦" , // Numeric 10
+"#" , "୰" , // late
+"$" , "ଽ" , 
+"&" , "ଌ" , // lu
+"*" , "ଞ୍ଚ" , // nc
+"" ,  "ଞ୍ଚ" , // nc
+"î" , "୍ରୁ" , // halanta-r-u
+"ï" , "୍ରୂ" , // halanta-r-dirgha u
+
+"Ð" , "କ୍ଷ୍ଣ" , // khya-N
+"Ñ" , "୍କ" ,  // halanta-k
+"Ò" , "୍ଖ" , // halanta-kh
+"Ó" , "୍ଗ" , // halanta-g
+"Ô" , "୍ଚ" , // halanta-c
+"Õ" , "୍ଜ" , // halanta-j
+"Ö" , "୍ଟ" , // halanta-T
+"×" , "୍ଠ" , // halanta-Th
+"Ø" , "୍ଡ" , // halanta-D
+"Ù" , "୍ଣ" , // halanta-N
+"Ú" , "୍ଥ" , // halanta-th
+"Û" , "୍ଧ" , // halanta-dh
+"Ü" , "୍ନ" , // halanta-n
+"Ý" , "୍ପ" , // halanta-p
+"Þ" , "୍ଫ" , // halanta-ph
+"ß" , "୍ୱ" , // halanta-b
+
+"<" , "ଣ୍ଟ" , // NT
+"" , "ଣ୍ଟ" , // NT
+"…" , "ଟ୍ଟ" , // TT
+"μ" , "ମ୍ପ" , // mp
+"µ" , "ମ୍ପ" , // mp
+"¶" , "ମ୍ଫ" , // mph
+"‰" , "ଣ୍ଣ" , // NN
+"Š" , "ଣ୍ଡ" , // ND
+
+"Œ" , "ଣ୍ଠ" , // NTh
+"™" , "ତ୍ମ" , // tm
+"š" , "ତ୍ପ" , // tp
+"›" , "ତ୍ସ" , // ts
+"œ" , "ତ୍ସ୍ନ" , // t-s-n
+"Ÿ" , "ଦ୍ଦ" , // d-dh
+
+
+"{" , "ଜ୍ଜ" , // jj
+"|" , "ଜ୍ଝ" , // j-jh
+"}" , "କ୍ର" , // kr
+
+"¡" , "ଦ୍ଧ" , // d-dh
+"¢" , "ଦ୍ଘ" , // d-gh
+"¤" , "ଧ୍ୟ" , // dhya
+"¦" , "ନ୍ଦ" , // nd
+"§" , "ନ୍ଧ" , // ndh
+"©" , "ତ୍ତ" , // tt
+"" , "ତ୍ତ" , // tt
+"ª" , "ନ୍ତ୍ର" , // ntr (jantra)
+"«" , "ନ୍ତ" , // nt
+"¬" , "ଞ୍ଜ" , // nj
+"ƒ" , "ଞ୍ଝ" , // njh
+"®" , "ପ୍ପ" , // pp
+"¯" , "ପ୍ତ" , // pt
+
+"°", "ପ୍ସ" , // ps
+"±" , "ବ୍ଦ" , // bd
+"²" , "ବ୍ଧ" , // bdh
+"´" , "ମ୍ବ" , // mb
+"¸" , "ମ୍ଭ" , // mbh
+" ̧" , "ମ୍ଭ", // ***mbha
+"̧" , "ମ୍ଭ", // mbha
+"¹" , "ମ୍ମ" , // mm
+"º" , "ଲ୍କ" , // lk
+"»" , "ଲ୍ଗ" , // lg
+"¼" , "ଶ୍ଛ" , // Nch
+"½" , "ଶ୍ଚ" , // S-ch (talabya sa - ca)
+"¾" , "ଷ୍ଣ" , // sh-N (murdhanya sa - Na)
+"¿" , "ଷ୍ପ" , // sh-p (murdhanya sa - pa)
+
+"À" , "ଷ୍ଫ" , // sh-ph (murdhanya sa - pha)
+"Á" , "ଷ୍ଟ" , // sh-T (murdhanya sa - Ta)
+"Â" , "ଷ୍ଠ" , // sh-Th (murdhanya sa - Tha)
+"Ã" , "ଷ୍କ" , // sh-k (murdhanya sa - ka)
+"Ä" , "ସ୍କ" , // s-k
+"Å" , "ସ୍ଖ" , // sh-kh
+"Æ" , "ସ୍ପ" , // sp
+"Ç" , "ସ୍ଫ" , // sph
+"È" , "ସ୍ତ୍ର" , // str
+"É" , "ସ୍ତ" , // st
+"Ê" , "ସ୍ୱ" , // sb
+"Ë" , "ଳ୍କ" , // lk
+"Ì" , "ଳ୍ପ" , // Lp
+"Í" , "ଳ୍ଫ" , // Lph
+"Î" , "ତ୍ଥ" , // t-th
+"" , "ତ୍ଥ" , // t-th
+"Ï" , "ଳ୍ଳ" , // L-L
+
+"@ା" , "ଆ" , // aa
+"@" , "ଅ" , // a
+"A" , "ଇ" , // i
+"B" , "ଈ" , // dirgha i
+"C" , "ଉ" , // u
+"D" , "ଊ" , // dirgha u
+"E" , "ଋ" , // R
+"F" , "ୠ" , // RR
+"G" , "ଏ" , // e
+"H" , "ଐ" , // ai
+"I" , "ଓ" , // o
+"J" , "ଔ" , // au 
+
+"K" , "କ" , // k
+"L" , "ଖ" , // kh
+"M" , "ଗ" , // g
+"N" , "ଘ" , // gh
+"O" , "ଙ" ,
+
+"P" , "ଚ",  // c
+"Q" , "ଛ", // ch
+"R" , "ଜ", // j
+"S" , "ଝ", // jh
+"T" , "ଞ", // Nya
+
+"U", "ଟ" , // T
+"V", "ଠ" , // Th
+"W", "ଡ" , // D
+"X", "ଢ" , // Dh
+"Y", "ଣ" , // N
+"Z" , "ତ" , // t
+"[" , "ଥ" , // th
+"\\" , "ଦ" , // d
+"]" , "ଧ" , // dh
+"^", "ନ" , // n
+"~" , "ଯ" , // y
+"_" , "ପ", // p
+"`" , "ଫ", // ph
+"a" , "ବ", // b
+"b" , "ଭ", // bh
+"c" , "ମ", // m
+"d" , "ୟ" , // y
+"e" , "ର" , // r
+"f" , "ଲ" , // l
+"g" , "ଶ" , // S (talabya sa)
+"h" , "ଷ" , // sh (murdhanya sa)
+"i" , "ସ" , // s
+"j" , "ହ" , // h
+"k" , "ଳ" , // L
+"l" , "କ୍ଷ" , // ksh
+"m" , "ଜ୍ଞ" , // gya
+"n" , "ଦ୍ଭ" , // d-bh
+"o" , "କ୍ଟ" , // kT
+"p" , "କ୍ଟ୍ର" , // kTr
+"q" , "କ୍ତ" , // kt
+"r" , "କ୍ସ" , // ks
+"s" , "ଗ୍ଦ" , // gd
+"t" , "ଗ୍ଧ" , // gdh
+"u" , "ଙ୍କ" , 
+"v" , "ଙ୍ଖ" ,
+"w" , "ଙ୍ଗ" ,
+"x" , "ଙ୍ଘ" ,
+"y" , "ଚ୍ଚ" ,
+"z" , "ଚ୍ଛ" ,
+" ̄", "ପ୍ତ",
+" ́", "ମ୍ବ",
+"‹", "ଣ୍ଢ" , // ndha
+"ଏø", " ଐ", // ai
+"୍ଯ" , "୍ୟ", // ja phala
+" ̈", "୍‍", // halanta with ZWJ
+"ଅା", "ଆ" // aa
+];
+
+// Unified conversion logic mirroring convert original.html
+function convertToUnicodeOdia(inputStr) {
+    if (!inputStr) return inputStr;
+    
+    var modified_substring = inputStr;
+    var text_array_length = text_array.length;
+
+    if ( modified_substring != "" )  // if string to be converted is non-blank then process
+    {
+        for ( var input_symbol_idx = 0; input_symbol_idx < text_array_length - 1; input_symbol_idx = input_symbol_idx + 2 )
+        { 
+            var idx = 0  ;  // index of the symbol being searched for replacement
+
+            while (idx != -1 ) //while-00
+            {
+                modified_substring = modified_substring.replace( text_array[ input_symbol_idx ] , text_array[input_symbol_idx+1] )
+                idx = modified_substring.indexOf( text_array[input_symbol_idx] )
+            } // end of while-00 loop
+        } // end of for loop
+
+        // following statements for adjusting position of e, ai, o and au maatraas.
+        modified_substring = modified_substring.replace( /([ù])([କଖଗଘଙଚଛଜଝଞଟଠଡଡ଼ଢଢ଼ଣତଥଦଧନପଫବଭମଯୟରଲବୱଶଷସହକ୍ଷଡ଼ଳ])/g , "$2$1" ) ;
+        //ଟଠଡଡ଼ଢଢ଼ଣତଥ
+        modified_substring = modified_substring.replace( /([ù])([୍])([କଖଗଘଚଛଜଝଟଠଡଡ଼ଢଢ଼ଣତଥନପଫବଭମୟରଲବୱଶଷସହକ୍ଷଡ଼ଳ])/g , "$2$3$1" ) ;
+        modified_substring = modified_substring.replace( /([ù])([୍])([କଖଗଘଚଛଜଝଟଠଡଡ଼ଢଢ଼ଣତଥନପଫବଭମୟରଲବୱଶଷସହକ୍ଷଡ଼ଳ])/g , "$2$3$1" ) ;
+        modified_substring = modified_substring.replace( /ùø/g  ,  "ୌ" ) ;
+        modified_substring = modified_substring.replace( /ùା/g  ,  "ୋ" ) ;
+        modified_substring = modified_substring.replace( /ù÷/g  ,  "ୈ" ) ;
+        modified_substring = modified_substring.replace( /ù/g  ,  "େ" ) ;
+
+        //following three statement for adjusting position of reph ie, half r .
+        modified_substring = modified_substring.replace( /([କଖଗଘଚଛଜଝଟଠଡଡ଼ଢଢ଼ଣତଥଦଧନପଫବଭମଯରଲଳଵଶଷସହକ୍ଷଜ୍ଞୟ])([ାିୀୁୂୃେୈୋୌଂଁ]*)à/g , "ð$1$2" ) ;
+        modified_substring = modified_substring.replace( /([କଖଗଘଚଛଜଝଟଠଡଡ଼ଢଢ଼ଣତଥଦଧନପଫବଭମଯରଲଳଵଶଷସହକ୍ଷଜ୍ଞୟ])([ାିୀୁୂୃେୈୋୌଂଁ]*)ð/g , "ð$1$2" ) ;
+        modified_substring = modified_substring.replace( /([କଖଗଘଚଛଜଝଟଠଡଡ଼ଢଢ଼ଣତଥଦଧନପଫବଭମଯରଲଳଵଶଷସହକ୍ଷଜ୍ଞୟ])([୍])à/g , "ð$1$2" ) ;
+        modified_substring = modified_substring.replace( /([କଖଗଘଚଛଜଝଟଠଡଡ଼ଢଢ଼ଣତଥଦଧନପଫବଭମଯରଲଳଵଶଷସହକ୍ଷଜ୍ଞୟ])([୍])ð/g , "ð$1$2" ) ;
+        modified_substring = modified_substring.replace( /ð/g , "ର୍" ) ;
+        modified_substring = modified_substring.replace( /([ଂଁ])([ାିୀୁୂୃେୈୋୌ])/g , "$2$1" ) ;
+
+        // fix: move a matra (vowel sign) that ended up before a halanta+consonant
+        // phala cluster (e.g. ta + i-kara + ya-phala) to after that cluster.
+        // e.g. "ତି୍ୟ" -> "ତ୍ୟି" (ସାହିତି୍ୟକ -> ସାହିତ୍ୟିକ)
+        modified_substring = modified_substring.replace( /([ାିୀୁୂୃେୈୋୌଂଁ])([୍][କଖଗଘଙଚଛଜଝଞଟଠଡଡ଼ଢଢ଼ଣତଥଦଧନପଫବଭମଯୟରଲଳଵଶଷସହ])/g , "$2$1" ) ;
+    }
+
+    return modified_substring;
+}
+
+// ====================================================
+// Reverse map: Unicode Odia -> Akruti/Sarala
+// Built from text_array. Since several Akruti codes map to the
+// same Unicode string, the FIRST occurrence in text_array wins
+// (the list is ordered from most specific/common forms first).
+// ====================================================
+const reverse_pairs = (function buildReversePairs() {
+    var seen = Object.create(null);
+    var pairs = [];
+    for (var i = 0; i < text_array.length - 1; i += 2) {
+        var akruti = text_array[i];
+        var unicode = text_array[i + 1];
+        if (!unicode) continue; // skip empty-target entries (pure deletions)
+        if (seen[unicode] !== undefined) continue; // keep first mapping only
+        seen[unicode] = true;
+        pairs.push(unicode, akruti);
+    }
+    // Sort so longer Unicode strings are replaced before shorter ones
+    // that might be substrings of them (prevents partial-match corruption).
+    var ordered = [];
+    var entries = [];
+    for (var j = 0; j < pairs.length - 1; j += 2) {
+        entries.push([pairs[j], pairs[j + 1]]);
+    }
+    entries.sort(function(a, b) { return b[0].length - a[0].length; });
+    entries.forEach(function(e) { ordered.push(e[0], e[1]); });
+    return ordered;
+})();
+
+function convertToAkruti(inputStr) {
+    if (!inputStr) return inputStr;
+
+    var modified_substring = inputStr;
+    var len = reverse_pairs.length;
+
+    if (modified_substring != "") {
+        for (var idx2 = 0; idx2 < len - 1; idx2 += 2) {
+            var target = reverse_pairs[idx2];
+            var replacement = reverse_pairs[idx2 + 1];
+            var searchIdx = 0;
+            while (searchIdx != -1) {
+                modified_substring = modified_substring.replace(target, replacement);
+                searchIdx = modified_substring.indexOf(target);
+            }
+        }
+    }
+
+    return modified_substring;
+}
+
+// Dispatches to the correct conversion direction based on the
+// currently selected radio button.
+function getSelectedDirection() {
+    var radios = document.getElementsByName("conv-dir");
+    for (var i = 0; i < radios.length; i++) {
+        if (radios[i].checked) return radios[i].value;
+    }
+    return "toUnicode";
+}
+
+function convertWithSelectedDirection(inputStr) {
+    var dir = getSelectedDirection();
+    return dir === "toAkruti" ? convertToAkruti(inputStr) : convertToUnicodeOdia(inputStr);
+}
+
+function updateDirectionLabels() {
+    var dir = getSelectedDirection();
+    var inputLabel = document.getElementById("input-label");
+    var outputLabel = document.getElementById("output-label");
+    if (dir === "toAkruti") {
+        inputLabel.textContent = "Paste Unicode Odia text below, or upload a .txt/.pdf file to convert directly";
+        outputLabel.textContent = "Converted Akruti/Sarala Text:";
+    } else {
+        inputLabel.textContent = "Copy Akruti/Sarala text and paste below, or upload a .txt/.pdf file to convert directly";
+        outputLabel.textContent = "Converted Unicode Text:";
+    }
+}
+
+// ====================================================
+// Progress bar helpers
+// ====================================================
+function showProgress() {
+    document.getElementById("progress-wrap").style.display = "block";
+    setProgress(0, "Converting… 0%");
+}
+
+function setProgress(pct, label) {
+    document.getElementById("progress-fill").style.width = pct + "%";
+    document.getElementById("progress-label").textContent = label || ("Converting… " + pct + "%");
+}
+
+function hideProgress() {
+    document.getElementById("progress-wrap").style.display = "none";
+}
+
+// Yields to the browser so the progress bar can actually repaint
+function nextFrame() {
+    return new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve, 0)));
+}
+
+// Splits text into line-based chunks and converts them one chunk at a
+// time so we can report real progress instead of faking a spinner.
+async function convertWithProgress(inputStr, onProgress) {
+    if (!inputStr) return inputStr;
+
+    const lines = inputStr.split("\n");
+    const totalLines = lines.length;
+    const chunkSize = Math.max(1, Math.ceil(totalLines / 40)); // ~40 progress updates
+    let result = [];
+
+    for (let i = 0; i < totalLines; i += chunkSize) {
+        const chunkLines = lines.slice(i, i + chunkSize);
+        const convertedChunk = convertWithSelectedDirection(chunkLines.join("\n"));
+        result.push(convertedChunk);
+
+        const pct = Math.min(100, Math.round(((i + chunkLines.length) / totalLines) * 100));
+        if (onProgress) onProgress(pct);
+        await nextFrame();
+    }
+
+    return result.join("\n");
+}
+
+// Function to handle standard text box conversion
+async function convert_text_area() {
+    var input = document.getElementById("nonunicode_text").value;
+    if (!input) {
+        alert("Please enter or upload some text first.");
+        return;
+    }
+
+    const btn = document.getElementById("convert-btn");
+    btn.disabled = true;
+    showProgress();
+
+    try {
+        const converted = await convertWithProgress(input, pct => setProgress(pct));
+        setProgress(100, "Done!");
+
+        var outputField = document.getElementById("unicode_text");
+        outputField.value = converted;
+
+        await nextFrame();
+        downloadConvertedText();
+    } finally {
+        btn.disabled = false;
+        setTimeout(hideProgress, 600);
+    }
+}
+
+// ====================================================
+// File upload support (.txt and .pdf)
+// Uploaded content is converted directly - the raw/original
+// text is never shown in the input textarea (no preview).
+// ====================================================
+function setUploadStatus(msg, isError) {
+    const el = document.getElementById("upload-status");
+    el.textContent = msg;
+    el.style.color = isError ? "#d9534f" : "#555";
+}
+
+function loadUploadedFile(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const isPdf = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+
+    if (isPdf) {
+        loadPdfFile(file);
+    } else {
+        loadTextFile(file);
+    }
+}
+
+function loadTextFile(file) {
+    setUploadStatus("Reading text file…");
+    showProgress();
+    setProgress(10, "Reading file… 10%");
+
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+        try {
+            const converted = await convertWithProgress(e.target.result, pct => setProgress(pct));
+            setProgress(100, "Done!");
+            document.getElementById("unicode_text").value = converted;
+            setUploadStatus("Done: " + file.name + " converted.");
+
+            await nextFrame();
+            downloadConvertedText();
+        } finally {
+            setTimeout(hideProgress, 600);
+        }
+    };
+    reader.onerror = function() {
+        setUploadStatus("Could not read the uploaded file.", true);
+        hideProgress();
+    };
+    reader.readAsText(file, "UTF-8");
+}
+
+async function loadPdfFile(file) {
+    setUploadStatus("Extracting text from PDF…");
+    showProgress();
+    setProgress(0, "Extracting PDF text… 0%");
+
+    try {
+        if (typeof pdfjsLib === "undefined") {
+            setUploadStatus("PDF library failed to load.", true);
+            hideProgress();
+            return;
+        }
+        pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+        let fullText = "";
+        // Extraction counts for the first half of the bar, conversion for the second half.
+        for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+            const page = await pdf.getPage(pageNum);
+            const content = await page.getTextContent();
+            const pageText = content.items.map(item => item.str).join(" ");
+            fullText += pageText + "\n\n";
+
+            const extractPct = Math.round((pageNum / pdf.numPages) * 50);
+            setProgress(extractPct, "Extracting PDF text… page " + pageNum + "/" + pdf.numPages);
+            await nextFrame();
+        }
+
+        if (!fullText.trim()) {
+            setUploadStatus("No extractable text found in this PDF (it may be scanned/image-based).", true);
+            hideProgress();
+            return;
+        }
+
+        const converted = await convertWithProgress(fullText, pct => {
+            setProgress(50 + Math.round(pct / 2));
+        });
+        setProgress(100, "Done!");
+
+        document.getElementById("unicode_text").value = converted;
+        setUploadStatus("Done: " + file.name + " (" + pdf.numPages + " page" + (pdf.numPages > 1 ? "s" : "") + ") converted.");
+
+        await nextFrame();
+        downloadConvertedText();
+    } catch (err) {
+        console.error(err);
+        setUploadStatus("Error reading PDF: " + err.message, true);
+    } finally {
+        setTimeout(hideProgress, 600);
+    }
+}
+
+function downloadConvertedText() {
+    const outputField = document.getElementById("unicode_text");
+    const content = outputField.value;
+    if (!content) {
+        return;
+    }
+    const dir = getSelectedDirection();
+    const filename = dir === "toAkruti" ? "converted_akruti.txt" : "converted_unicode.txt";
+
+    const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+}
+
+// ====================================================
+// SQL.js DB Upload, Analysis, and Processing Engine
+// ====================================================
+let db;
+
+async function loadDatabase(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Load sql.js WASM locally through CDN 
+    const SQL = await initSqlJs({
+        locateFile: filename => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${filename}`
+    });
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const uInt8Array = new Uint8Array(e.target.result);
+        db = new SQL.Database(uInt8Array);
+        analyzeDBStructure();
+    };
+    reader.readAsArrayBuffer(file);
+}
+
+function analyzeDBStructure() {
+    document.getElementById("db-ui").style.display = "block";
+    const container = document.getElementById("tables-container");
+    container.innerHTML = "";
+
+    // Query all tables in the SQLite database
+    const res = db.exec("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%';");
+    if (res.length === 0) {
+        container.innerHTML = "<p style='text-align:center;'>No tables found in this database.</p>";
+        return;
+    }
+
+    const tables = res[0].values.map(row => row[0]);
+    
+    // Generate UI Checkboxes dynamically for every column in every table
+    tables.forEach(table => {
+        let tableDiv = document.createElement("div");
+        tableDiv.className = "table-group";
+        
+        let header = document.createElement("h4");
+        header.innerText = `Table: ${table}`;
+        tableDiv.appendChild(header);
+
+        const colRes = db.exec(`PRAGMA table_info("${table}");`);
+        if (colRes.length > 0) {
+            colRes[0].values.forEach(col => {
+                const colName = col[1];
+                const colType = col[2];
+                
+                let label = document.createElement("label");
+                label.style.display = "block";
+                label.style.marginLeft = "15px";
+                label.style.marginBottom = "8px";
+                label.style.cursor = "pointer";
+                
+                let checkbox = document.createElement("input");
+                checkbox.type = "checkbox";
+                checkbox.className = "db-col-check";
+                checkbox.dataset.table = table;
+                checkbox.dataset.column = colName;
+                
+                label.appendChild(checkbox);
+                label.appendChild(document.createTextNode(` ${colName} [Type: ${colType || 'Unknown'}]`));
+                tableDiv.appendChild(label);
+            });
+        }
+        container.appendChild(tableDiv);
+    });
+}
+
+function processAndDownloadDB() {
+    const checkboxes = document.querySelectorAll('.db-col-check:checked');
+    if (checkboxes.length === 0) {
+        alert("Please select at least one column to convert.");
+        return;
+    }
+
+    // Organize selected columns by table
+    const tasks = {};
+    checkboxes.forEach(cb => {
+        const t = cb.dataset.table;
+        const c = cb.dataset.column;
+        if (!tasks[t]) tasks[t] = [];
+        tasks[t].push(c);
+    });
+
+    try {
+        for (const [table, columns] of Object.entries(tasks)) {
+            // Using ROWID to uniquely identify rows for updates
+            const query = `SELECT ROWID, ${columns.map(c => `"${c}"`).join(", ")} FROM "${table}"`;
+            const rows = db.exec(query);
+            
+            if (rows.length > 0) {
+                const values = rows[0].values;
+                
+                // Pre-compile the UPDATE statement for speed
+                const setClauses = columns.map(c => `"${c}" = ?`).join(", ");
+                const stmt = db.prepare(`UPDATE "${table}" SET ${setClauses} WHERE ROWID = ?`);
+                
+                values.forEach(row => {
+                    const rowid = row[0];
+                    const updatedCols = [];
+                    let rowChanged = false;
+                    
+                    // Loop through the text columns fetched
+                    for (let i = 1; i < row.length; i++) {
+                        const originalStr = row[i];
+                        if (typeof originalStr === 'string' && originalStr.trim() !== '') {
+                            const convertedStr = convertWithSelectedDirection(originalStr);
+                            updatedCols.push(convertedStr);
+                            if (convertedStr !== originalStr) {
+                                rowChanged = true;
+                            }
+                        } else {
+                            updatedCols.push(originalStr);
+                        }
+                    }
+                    
+                    if (rowChanged) {
+                        updatedCols.push(rowid); 
+                        stmt.run(updatedCols);
+                    }
+                });
+                stmt.free();
+            }
+        }
+
+        // Generate the new SQLite binary file
+        const binaryArray = db.export();
+        const blob = new Blob([binaryArray], {type: "application/octet-stream"});
+        const url = window.URL.createObjectURL(blob);
+        
+        // Trigger browser download mechanism
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "Odia_Converted_Database.sqlite";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        
+        alert("Database conversion successful! The file is downloading.");
+        
+    } catch (err) {
+        console.error(err);
+        alert("An error occurred during database processing: " + err.message);
+    }
+}
+</script>
+</body>
+</html>
