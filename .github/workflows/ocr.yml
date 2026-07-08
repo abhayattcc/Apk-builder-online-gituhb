@@ -1,4 +1,4 @@
-name: Generate Odia OCR PDF
+name: Generate Odia OCR Text
 
 on:
   push:
@@ -13,7 +13,7 @@ jobs:
   ocr-process:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # Required to push the new PDF back to the repo
+      contents: write # Required to push the new text files back to the repo
 
     steps:
       - name: Checkout Repository
@@ -26,20 +26,20 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Install System Dependencies (Tesseract & Odia Pack)
+      - name: Install System Dependencies (Tesseract, Odia Pack, & Poppler)
         run: |
           sudo apt-get update
-          sudo apt-get install -y tesseract-ocr tesseract-ocr-ori ghostscript
+          sudo apt-get install -y tesseract-ocr tesseract-ocr-ori poppler-utils
 
       - name: Install Python Dependencies
         run: |
-          pip install ocrmypdf
+          pip install pytesseract pdf2image
 
       - name: Run Python OCR Converter
         run: python converter.py
 
-      - name: Commit and Push Searchable PDF
+      - name: Commit and Push OCR Text Files
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "chore: Auto-generate Odia OCR PDF [skip ci]"
-          file_pattern: '*_ocr.pdf'
+          commit_message: "chore: Auto-generate Odia OCR text files [skip ci]"
+          file_pattern: '*_ocr.txt'
