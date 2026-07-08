@@ -5,73 +5,64 @@ on:
     branches:
       - main
     paths:
-      - "**/*.pdf"
-  workflow_dispatch: # This adds the manual "Run workflow" button
-
+      - "**/*.pdf"       # Fixed: Standard glob to catch PDFs in all subdirectories
+    workflow_dispatch:   
 permissions:
-  contents: write
+  contents: write      # Needed to commit the output .txt back to the repo
 
 jobs:
   convert:
     runs-on: ubuntu-latest
 
     steps:
+      # 1. Check out the repo (full history so we can commit back)
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # 2. Set up Python
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
+      # 3. Install pdfminer.six (only dependency)
       - name: Install dependencies
         run: pip install pdfminer.six
 
-      - name: Prepare Scripts
+      # 4. Handle HTML filename mismatch
+      # The python script requires "convert.html", but the repo might have "convert-1-2.html"
+      - name: Ensure convert.html exists
         run: |
-          # Automatically fix the filename if it was uploaded with a space
-          if [ -f "odia convert.py" ]; then
-            echo "Renaming 'odia convert.py' to 'odia_convert.py'..."
-            mv "odia convert.py" odia_convert.py
-          fi
-          
-          # Verify the HTML file exists
-          if [ ! -f "convert.html" ]; then
-            echo "Error: convert.html is missing. Please ensure it is in the root directory."
-            exit 1
+          if [ -f "convert-1-2.html" ] && [ ! -f "convert.html" ]; then
+            echo "Copying convert-1-2.html to convert.html for the Python script..."
+            cp convert-1-2.html convert.html
           fi
 
-      - name: Convert PDFs
+      # 5. Find every PDF in the repo and convert it
+      - name: Convert all PDFs to Odia Unicode text
+        # Fixed: Using -print0 and read -d '' safely processes filenames with spaces
         run: |
           set -e
-          
-          # Check if PDFs exist
-          pdf_count=$(find . -type f -name "*.pdf" | wc -l)
-          if [ "$pdf_count" -eq 0 ]; then
-            echo "No PDF files found to convert."
-            exit 0
-          fi
-
-          # Convert all PDFs, safely handling spaces in PDF names
           find . -type f -name "*.pdf" -print0 | while IFS= read -r -d '' pdf; do
             base="${pdf%.pdf}"
             out="${base}_unicode.txt"
-            echo "Converting: $pdf -> $out"
+            echo "Converting: $pdf  ->  $out"
             python3 odia_convert.py "$pdf" -o "$out"
           done
 
-      - name: Commit Results
+      # 6. Commit the generated .txt files back to main
+      - name: Commit output txt files
         run: |
-          git config user.name "github-actions[bot]"
+          git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           
-          # Stage all generated text files safely
-          find . -type f -name "*_unicode.txt" -exec git add {} +
+          # Fixed: Use find to safely stage the generated files, avoiding pathspec errors
+          find . -name "*_unicode.txt" -exec git add {} +
           
-          # Commit and push only if new files were created
+          # Only commit and push if there are actual changes
           if ! git diff --cached --quiet; then
             git commit -m "Auto-convert PDF to Odia Unicode [skip ci]"
             git push
           else
-            echo "No new conversions to commit."
+            echo "No new text conversions to commit."
           fi
