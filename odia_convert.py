@@ -1,4 +1,13 @@
+"""
+Akruti/Sarala-encoded PDF -> Unicode Odia converter.
+Based on convert.html (updated version with macOSRoman + cluster-regex reordering).
 
+Usage:
+    python3 odia_convert.py input.pdf -o output.txt
+
+Requires convert.html in the same folder as this script.
+Install dependency:  pip install pdfminer.six
+"""
 import re
 import sys
 import os
@@ -328,4 +337,3 @@ if __name__ == "__main__":
     with open(args.output, "w", encoding="utf-8") as f:
         f.write(text)
     print("Wrote", args.output)
-PYEOF
