@@ -1,0 +1,170 @@
+# ══════════════════════════════════════════════════════════════════════════════
+#  PDF OCR Extractor  –  GitHub Actions Workflow
+#  ─────────────────────────────────────────────
+#  Repo layout (everything flat in root):
+#
+#    your-repo/
+#    ├── ocr_extractor.py          ← this script lives here
+#    ├── scan.pdf                  ← upload your PDF here
+#    ├── scan_ocr.txt              ← auto-generated after run
+#    ├── scan_ocr.json             ← auto-generated after run
+#    └── .github/workflows/
+#        └── ocr_workflow.yml      ← this file
+#
+#  Triggers:
+#    • Push any .pdf to repo root  → OCR runs automatically
+#    • Manual dispatch via GitHub UI → enter filename, click Run
+#
+#  Required GitHub Secret:
+#    GOOGLE_CREDENTIALS_JSON  → full contents of GCP service-account JSON key
+# ══════════════════════════════════════════════════════════════════════════════
+
+name: PDF OCR Extractor
+
+on:
+  # ── Auto-trigger: any PDF pushed to repo root ──────────────────────────────
+  push:
+    paths:
+      - "*.pdf"          # root-level PDFs only
+
+  # ── Manual trigger ─────────────────────────────────────────────────────────
+  workflow_dispatch:
+    inputs:
+      pdf_filename:
+        description: "PDF filename in repo root (e.g. scan.pdf)"
+        required: false
+        default: ""
+      dpi:
+        description: "Render DPI — 300 default, 400 for small text"
+        required: false
+        default: "300"
+
+concurrency:
+  group: ocr-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ocr:
+    name: Extract text from PDF(s)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      # ── 1. Checkout ────────────────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # ── 2. Python ──────────────────────────────────────────────────────────
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      # ── 3. Dependencies ────────────────────────────────────────────────────
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install \
+            pymupdf==1.24.3 \
+            google-cloud-vision==3.7.2 \
+            google-auth==2.29.0
+
+      # ── 4. GCP credentials ─────────────────────────────────────────────────
+      - name: Configure Google Cloud credentials
+        env:
+          GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
+        run: |
+          mkdir -p "$HOME/.config/gcloud"
+          echo "$GOOGLE_CREDENTIALS_JSON" > "$HOME/.config/gcloud/service_account.json"
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$HOME/.config/gcloud/service_account.json" \
+               >> "$GITHUB_ENV"
+
+      # ── 5. Find which PDF(s) to process ───────────────────────────────────
+      - name: Detect PDF files
+        id: detect
+        run: |
+          # Manual dispatch with a specific filename
+          if [ -n "${{ github.event.inputs.pdf_filename }}" ]; then
+            echo "pdfs=${{ github.event.inputs.pdf_filename }}" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Push event — only PDFs changed in this commit
+          if [ "${{ github.event_name }}" = "push" ]; then
+            CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null \
+                      || git ls-files "*.pdf")
+            # Keep only root-level PDFs (no slash in path)
+            PDFS=$(echo "$CHANGED" \
+                   | grep -E '^[^/]+\.pdf$' \
+                   | tr '\n' ' ' \
+                   | xargs)
+            echo "pdfs=$PDFS" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Fallback: all root-level PDFs
+          ALL=$(find . -maxdepth 1 -name "*.pdf" | sed 's|^\./||' \
+                | tr '\n' ' ' | xargs)
+          echo "pdfs=$ALL" >> "$GITHUB_OUTPUT"
+
+      # ── 6. Run OCR ─────────────────────────────────────────────────────────
+      - name: Run OCR extraction
+        env:
+          PDF_LIST:   ${{ steps.detect.outputs.pdfs }}
+          RENDER_DPI: ${{ github.event.inputs.dpi || '300' }}
+        run: |
+          if [ -z "$PDF_LIST" ]; then
+            echo "⚠  No PDF files detected — nothing to process."
+            exit 0
+          fi
+
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "  PDFs    : $PDF_LIST"
+          echo "  DPI     : $RENDER_DPI"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+          for PDF in $PDF_LIST; do
+            if [ ! -f "$PDF" ]; then
+              echo "⚠  '$PDF' not found in repo root — skipping"
+              continue
+            fi
+            STEM=$(basename "$PDF" .pdf)
+            OUTPUT="${STEM}_ocr.txt"       # saved beside the PDF in root
+
+            echo ""
+            echo "▶  Processing: $PDF  →  $OUTPUT"
+            python ocr_extractor.py "$PDF" \
+              --dpi "$RENDER_DPI" \
+              --output "$OUTPUT"
+            echo "✓  Done"
+          done
+
+      # ── 7. Upload as workflow artifact (downloadable from Actions tab) ─────
+      - name: Upload OCR results as artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ocr-results
+          path: |
+            *_ocr.txt
+            *_ocr.json
+          retention-days: 30
+          if-no-files-found: warn
+
+      # ── 8. Commit results back to repo ────────────────────────────────────
+      - name: Commit OCR results
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add *_ocr.txt *_ocr.json 2>/dev/null || true
+
+          if git diff --cached --quiet; then
+            echo "ℹ  OCR outputs unchanged — nothing to commit."
+          else
+            git commit -m "🤖 OCR: extracted text [skip ci]"
+            git push
+            echo "✅ Results committed to repo root."
+          fi
