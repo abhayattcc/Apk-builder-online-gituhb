@@ -5,8 +5,8 @@ Telegram Media Downloader (GitHub Actions ready)
 Downloads video / photo / document from a public Telegram link.
 
 Usage (local):
-    export TELEGRAM_API_ID=12345678
-    export TELEGRAM_API_HASH=your_hash
+    export TELEGRAM_API_ID=39250553
+    export TELEGRAM_API_HASH=3624e420a0a197cf5fc620605ce4e929
     python telegram_downloader.py "https://t.me/channel/123"
 
 Usage (GitHub Actions):
