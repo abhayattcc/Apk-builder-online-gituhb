@@ -24,8 +24,8 @@ import sys
 from pathlib import Path
 
 # Read from environment (safe for GitHub Actions secrets)
-API_ID = int(os.getenv("TELEGRAM_API_ID", "0"))
-API_HASH = os.getenv("TELEGRAM_API_HASH", "")
+API_ID = int(os.getenv("TELEGRAM_API_ID", "39250553"))
+API_HASH = os.getenv("TELEGRAM_API_HASH", "3624e420a0a197cf5fc620605ce4e929")
 SESSION_STRING = os.getenv("TELEGRAM_SESSION", "")  # optional string session
 DOWNLOAD_DIR = os.getenv("DOWNLOAD_DIR", "downloads")
 
