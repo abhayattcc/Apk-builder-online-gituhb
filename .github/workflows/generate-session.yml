@@ -1,0 +1,77 @@
+name: Generate Telegram StringSession
+
+on:
+  workflow_dispatch:
+    inputs:
+      step:
+        description: "Step to run"
+        required: true
+        type: choice
+        options:
+          - "1 - Send Login Code"
+          - "2 - Create StringSession"
+        default: "1 - Send Login Code"
+      api_id:
+        description: "API ID (number from my.telegram.org)"
+        required: true
+        type: string
+      api_hash:
+        description: "API Hash (from my.telegram.org)"
+        required: true
+        type: string
+      phone:
+        description: "Phone with country code (e.g. +919876543210)"
+        required: true
+        type: string
+      login_code:
+        description: "The code you received from Telegram (only for Step 2)"
+        required: false
+        type: string
+        default: ""
+      phone_code_hash:
+        description: "phone_code_hash from Step 1 logs (only for Step 2)"
+        required: false
+        type: string
+        default: ""
+      password:
+        description: "2FA password (only if you have two-step verification)"
+        required: false
+        type: string
+        default: ""
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Telethon
+        run: pip install telethon
+
+      - name: Run session generator
+        env:
+          STEP: ${{ inputs.step }}
+          API_ID: ${{ inputs.api_id }}
+          API_HASH: ${{ inputs.api_hash }}
+          PHONE: ${{ inputs.phone }}
+          LOGIN_CODE: ${{ inputs.login_code }}
+          PHONE_CODE_HASH: ${{ inputs.phone_code_hash }}
+          PASSWORD: ${{ inputs.password }}
+        run: python generate_session.py
+
+      - name: Upload StringSession artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: string-session
+          path: string_session.txt
+          retention-days: 1
+          if-no-files-found: ignore
