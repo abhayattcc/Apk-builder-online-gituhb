@@ -1,0 +1,32 @@
+# Telegram session files (NEVER commit)
+*.session
+*.session-journal
+tg_session*
+
+# Downloads
+downloads/
+*.mp4
+*.mkv
+*.webm
+*.mov
+*.avi
+*.jpg
+*.jpeg
+*.png
+*.pdf
+*.zip
+downloaded_file.txt
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+.env
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

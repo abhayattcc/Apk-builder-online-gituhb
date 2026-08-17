@@ -1,121 +1,127 @@
-# Odia Voice Clone — Piper TTS (Android-only workflow)
+# Telegram Video Downloader (GitHub Actions Only)
 
-Clone your own voice in Odia and produce a `.onnx` + `.onnx.json` Piper voice model,
-driven entirely from an Android phone. No PC required.
+Download videos, photos and documents from any public Telegram link **using only GitHub Actions**.
 
-## Why this shape
+No need to keep a computer running. Just trigger the workflow and download the artifact.
 
-Piper voice training needs a GPU. GitHub Actions' free runners are CPU-only, so they
-can't do the actual training in reasonable time. GitHub is used here for:
-- Storing your dataset + scripts (repo)
-- Validating your recordings automatically (CI, runs on every push)
-- Packaging the final release
+---
 
-**Kaggle Notebooks** (free, 30 GPU-hrs/week, works in a phone browser) does the
-actual training. You trigger it manually from your phone by opening the notebook
-and tapping "Run All" — no PC involved anywhere.
+## Live Page
 
-## Full pipeline
+After you push the repo and enable Pages, the page will be available at:
 
 ```
-[Android: record voice] 
-        │
-        ▼
-[Android: GitHub app / termux / mobile browser → push to repo]
-        │
-        ▼
-[GitHub Actions: validates dataset on push] ← runs automatically
-        │
-        ▼
-[Kaggle Notebook: pulls repo, fine-tunes Piper] ← you tap "Run All" from phone
-        │
-        ▼
-[odia.onnx + odia.onnx.json] → download to phone
+https://YOUR_USERNAME.github.io/telegram-video-downloader/
 ```
 
-## Step-by-step
+---
 
-### 1. Record your voice (on Android)
-- Use any recorder app that can save **WAV, 22050 Hz, mono, 16-bit**
-  (e.g. "RecForge II", "Easy Voice Recorder" with WAV export set manually in settings).
-- Record 100–300 short Odia sentences. More = better clone. 300+ is noticeably
-  better than 100.
-- Keep each clip to one sentence, minimal background noise, consistent mic distance.
-- Name files `wav_0001.wav`, `wav_0002.wav`, ... in order (see `dataset/metadata.csv`).
+## One-time Setup
 
-### 2. Build metadata.csv
-Format (pipe-separated, LJSpeech-style), one line per clip:
+### 1. Push this repository to GitHub
+
+Create a new repo and push all files to the `main` branch.
+
+### 2. Add Secrets
+
+Go to your repository → **Settings → Secrets and variables → Actions → New repository secret**
+
+Add these two secrets:
+
+| Secret Name          | Value                          |
+|----------------------|--------------------------------|
+| `TELEGRAM_API_ID`    | Your API ID (number)           |
+| `TELEGRAM_API_HASH`  | Your API Hash (string)         |
+
+(Optional but recommended)  
+`TELEGRAM_SESSION` → StringSession (so the action does not need to ask for phone code every time)
+
+### 3. Enable GitHub Pages
+
+- Go to **Settings → Pages**
+- Source = **GitHub Actions**
+
+The page will deploy automatically on every push to `main`.
+
+---
+
+## How to Download a Telegram Video
+
+1. Open your repository on GitHub
+2. Click the **Actions** tab
+3. Select **“Download Telegram Media”** on the left
+4. Click **Run workflow**
+5. Paste the Telegram link (example: `https://t.me/odiamahabharat/154`)
+6. Click the green **Run workflow** button
+7. Wait 30–90 seconds
+8. Open the finished run → scroll down → download the **telegram-media** artifact
+
+That’s it. The video will be inside the artifact.
+
+---
+
+## Generate StringSession (Recommended)
+
+Running the action the first time without a session will fail because GitHub Actions cannot receive the login code interactively.
+
+Do this **once** on your computer:
+
+```bash
+pip install telethon
+python -c "
+from telethon.sync import TelegramClient
+from telethon.sessions import StringSession
+api_id = 12345678          # your api_id
+api_hash = 'your_api_hash'
+with TelegramClient(StringSession(), api_id, api_hash) as client:
+    print('Your TELEGRAM_SESSION string:')
+    print(client.session.save())
+"
 ```
-wav_0001|ଆପଣ କେମିତି ଅଛନ୍ତି
-wav_0002|ମୋର ନାଁ ଅଲେକ୍ସ
+
+Copy the long string that is printed and add it as the secret `TELEGRAM_SESSION`.
+
+After that the GitHub Action will work fully automatically.
+
+---
+
+## Project Structure
+
 ```
-Use any Android text editor (or Google Keep → export as .txt → rename to .csv).
-See `dataset/metadata.csv` for a starter template with ~20 common Odia sentences
-you can read and replace/extend.
+telegram-video-downloader/
+├── index.html                      # Downloader page (deployed by Actions)
+├── telegram_downloader.py          # Downloader script
+├── requirements.txt
+├── README.md
+├── .gitignore
+└── .github/workflows/
+    ├── deploy.yml                  # Deploys the page to GitHub Pages
+    └── download.yml                # Downloads media when you trigger it
+```
 
-### 3. Push to GitHub (from Android)
-Options, no PC needed:
-- **GitHub mobile app**: can create files/commits directly but bulk WAV upload is
-  clunky through it.
-- **Working Copy (iOS) / MGit or Termux+git (Android)**: better for bulk file
-  upload. Termux is the most reliable:
-  ```bash
-  pkg install git
-  git clone https://github.com/<you>/odia-voice-clone.git
-  cp /sdcard/Recordings/*.wav odia-voice-clone/dataset/wavs/
-  cd odia-voice-clone
-  git add .
-  git commit -m "Add recordings"
-  git push
-  ```
-- Or zip the wavs on-device and upload via GitHub's web uploader (mobile Chrome
-  supports drag-and-drop / file picker for repo uploads, handles zips if you
-  unzip first — GitHub web UI doesn't auto-extract, so upload the individual
-  wav files or use Termux instead for anything beyond a few dozen files).
+---
 
-### 4. Let CI validate
-On every push, `.github/workflows/validate-dataset.yml` runs automatically and checks:
-- Every wav in metadata.csv actually exists
-- Sample rate / channel / bit depth are correct
-- No empty transcripts
-- Reports total recorded duration
+## Local usage (optional)
 
-Check the **Actions** tab in the GitHub mobile app or mobile browser after pushing.
-Fix anything it flags before training — garbage in, garbage voice out.
+```bash
+export TELEGRAM_API_ID=your_id
+export TELEGRAM_API_HASH=your_hash
+# optional: export TELEGRAM_SESSION=your_string_session
 
-### 5. Train on Kaggle (from phone browser)
-1. Go to kaggle.com on your phone, sign in, create a new Notebook.
-2. Turn on GPU: Notebook settings → Accelerator → GPU T4 x2 (or similar).
-3. Copy the contents of `scripts/kaggle_train.py` into a notebook cell
-   (it's written to run top-to-bottom as one script).
-4. Edit the `GITHUB_REPO` variable at the top to point to your repo.
-5. Tap **Run All**. Training runs in Kaggle's cloud — your phone just needs to
-   stay on the page long enough to start it; Kaggle continues running the
-   session even if you background the browser tab (session persists on their
-   servers for a while, but don't fully close the notebook until it's done for
-   the first run so you can watch for errors).
-6. When done, the script zips `odia.onnx` + `odia.onnx.json` into
-   `/kaggle/working/output.zip` — download it via Kaggle's Output panel.
+python telegram_downloader.py "https://t.me/odiamahabharat/154"
+```
 
-### 6. Use your voice model
-Copy `odia.onnx` + `odia.onnx.json` onto your phone (Kaggle → Download).
-Load them with `sherpa-onnx` or Piper's Android runtime in your app — this
-plugs directly into the TTS work you've already been doing (Piper ONNX +
-`odiaToIpa()` phoneme mapping) for the Odia TTS app.
+---
 
-## Files in this project
+## Notes
 
-- `dataset/metadata.csv` — transcript template, LJSpeech format
-- `dataset/wavs/` — put your recordings here
-- `scripts/kaggle_train.py` — the actual fine-tuning script, run on Kaggle
-- `scripts/validate_dataset.py` — checks used by CI, also runnable manually
-- `.github/workflows/validate-dataset.yml` — auto-runs validation on push
+- Works only with public channels or channels your account has joined.
+- Files are kept as artifacts for 5 days.
+- Never commit your API credentials or session file.
+- For personal / educational use only.
 
-## Realistic expectations
+---
 
-- 100 sentences: usable but noticeably synthetic/approximate clone.
-- 300+ sentences, clean audio, consistent recording conditions: good clone quality.
-- 1000+: approaching very natural output.
-- Training time on Kaggle T4 GPU for a fine-tune (not from scratch): roughly
-  1–4 hours depending on dataset size and epochs — fits well inside Kaggle's
-  free weekly GPU quota.
+## License
+
+MIT
