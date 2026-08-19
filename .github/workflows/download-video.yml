@@ -1,0 +1,80 @@
+name: Download Video
+
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: "YouTube URL"
+        required: true
+        type: string
+      quality:
+        description: "Quality"
+        required: true
+        default: "best"
+        type: choice
+        options:
+          - best
+          - 1080p
+          - 720p
+          - 480p
+          - mp3
+          - m4a
+
+permissions:
+  contents: write
+
+jobs:
+  download:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup yt-dlp + FFmpeg
+        uses: AnimMouse/setup-yt-dlp@v3
+
+      - name: Download
+        run: |
+          mkdir -p downloads
+          
+          URL="${{ github.event.inputs.url }}"
+          QUALITY="${{ github.event.inputs.quality }}"
+
+          case $QUALITY in
+            "best")
+              yt-dlp -f "bv*+ba/b" --merge-output-format mp4 --no-playlist \
+                -o "downloads/%(title).100B [%(id)s].%(ext)s" "$URL"
+              ;;
+            "1080p")
+              yt-dlp -f "bv*[height<=1080]+ba/b" --merge-output-format mp4 --no-playlist \
+                -o "downloads/%(title).100B [%(id)s].%(ext)s" "$URL"
+              ;;
+            "720p")
+              yt-dlp -f "bv*[height<=720]+ba/b" --merge-output-format mp4 --no-playlist \
+                -o "downloads/%(title).100B [%(id)s].%(ext)s" "$URL"
+              ;;
+            "480p")
+              yt-dlp -f "bv*[height<=480]+ba/b" --merge-output-format mp4 --no-playlist \
+                -o "downloads/%(title).100B [%(id)s].%(ext)s" "$URL"
+              ;;
+            "mp3")
+              yt-dlp -x --audio-format mp3 --no-playlist \
+                -o "downloads/%(title).100B [%(id)s].%(ext)s" "$URL"
+              ;;
+            "m4a")
+              yt-dlp -x --audio-format m4a --no-playlist \
+                -o "downloads/%(title).100B [%(id)s].%(ext)s" "$URL"
+              ;;
+          esac
+
+          ls -lh downloads/
+
+      - name: Commit and Push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add downloads/
+          git commit -m "Downloaded: ${{ github.event.inputs.url }}" || exit 0
+          git push
