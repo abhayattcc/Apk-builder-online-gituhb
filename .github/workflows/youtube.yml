@@ -1,14 +1,14 @@
-name: Download & Deploy to Pages
+name: YouTube Downloader
 
 on:
   workflow_dispatch:
     inputs:
       url:
-        description: "YouTube / any yt-dlp supported URL"
+        description: "YouTube URL"
         required: true
         type: string
-      format:
-        description: "Format"
+      quality:
+        description: "Quality"
         required: true
         default: "best"
         type: choice
@@ -17,8 +17,8 @@ on:
           - 1080p
           - 720p
           - 480p
-          - audio-mp3
-          - audio-m4a
+          - mp3
+          - m4a
 
 permissions:
   contents: write
@@ -26,13 +26,13 @@ permissions:
   id-token: write
 
 concurrency:
-  group: "pages"
+  group: pages
   cancel-in-progress: false
 
 jobs:
   download:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 45
 
     steps:
       - name: Checkout
@@ -41,50 +41,52 @@ jobs:
       - name: Setup yt-dlp + FFmpeg
         uses: AnimMouse/setup-yt-dlp@v3
 
-      - name: Download video
+      - name: Download
         run: |
           mkdir -p downloads
           
           URL="${{ github.event.inputs.url }}"
-          FORMAT="${{ github.event.inputs.format }}"
+          QUALITY="${{ github.event.inputs.quality }}"
 
-          case $FORMAT in
+          case $QUALITY in
             "best")
               yt-dlp -f "bv*+ba/b" --merge-output-format mp4 \
-                -o "downloads/%(title).200B [%(id)s].%(ext)s" "$URL"
+                --no-playlist \
+                -o "downloads/%(title).150B [%(id)s].%(ext)s" "$URL"
               ;;
             "1080p")
               yt-dlp -f "bv*[height<=1080]+ba/b" --merge-output-format mp4 \
-                -o "downloads/%(title).200B [%(id)s].%(ext)s" "$URL"
+                --no-playlist \
+                -o "downloads/%(title).150B [%(id)s].%(ext)s" "$URL"
               ;;
             "720p")
               yt-dlp -f "bv*[height<=720]+ba/b" --merge-output-format mp4 \
-                -o "downloads/%(title).200B [%(id)s].%(ext)s" "$URL"
+                --no-playlist \
+                -o "downloads/%(title).150B [%(id)s].%(ext)s" "$URL"
               ;;
             "480p")
               yt-dlp -f "bv*[height<=480]+ba/b" --merge-output-format mp4 \
-                -o "downloads/%(title).200B [%(id)s].%(ext)s" "$URL"
+                --no-playlist \
+                -o "downloads/%(title).150B [%(id)s].%(ext)s" "$URL"
               ;;
-            "audio-mp3")
-              yt-dlp -x --audio-format mp3 \
-                -o "downloads/%(title).200B [%(id)s].%(ext)s" "$URL"
+            "mp3")
+              yt-dlp -x --audio-format mp3 --no-playlist \
+                -o "downloads/%(title).150B [%(id)s].%(ext)s" "$URL"
               ;;
-            "audio-m4a")
-              yt-dlp -x --audio-format m4a \
-                -o "downloads/%(title).200B [%(id)s].%(ext)s" "$URL"
+            "m4a")
+              yt-dlp -x --audio-format m4a --no-playlist \
+                -o "downloads/%(title).150B [%(id)s].%(ext)s" "$URL"
               ;;
           esac
 
-          echo "=== Downloaded files ==="
           ls -lh downloads/
 
-      - name: Commit & Push to main
+      - name: Commit files
         run: |
           git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add downloads/
-          git commit -m "Download: ${{ github.event.inputs.url }}" || echo "No changes"
+          git commit -m "Downloaded: ${{ github.event.inputs.url }}" || echo "No changes to commit"
           git push
 
   deploy:
@@ -101,10 +103,10 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
-      - name: Upload artifact
+      - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './downloads'
+          path: downloads
 
       - name: Deploy to GitHub Pages
         id: deployment
