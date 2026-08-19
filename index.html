@@ -8,146 +8,199 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+      background: #0f0f13;
+      color: #eee;
       min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      padding: 20px;
+      padding: 40px 20px;
     }
-    .card {
-      background: rgba(255,255,255,0.08);
-      backdrop-filter: blur(12px);
-      border-radius: 20px;
-      padding: 40px;
-      width: 100%;
-      max-width: 520px;
-      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
-      border: 1px solid rgba(255,255,255,0.1);
+    .container {
+      max-width: 640px;
+      margin: 0 auto;
     }
     h1 {
       text-align: center;
+      font-size: 2rem;
       margin-bottom: 8px;
-      font-size: 28px;
-      background: linear-gradient(to right, #ff416c, #ff4b2b);
+      background: linear-gradient(90deg, #ff2d55, #ff9500);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
     .subtitle {
       text-align: center;
-      color: #aaa;
+      color: #888;
+      margin-bottom: 40px;
+    }
+    .card {
+      background: #1c1c24;
+      border-radius: 16px;
+      padding: 28px;
+      border: 1px solid #2a2a35;
       margin-bottom: 30px;
-      font-size: 14px;
     }
     label {
       display: block;
-      margin-bottom: 6px;
+      margin-bottom: 8px;
       font-size: 14px;
-      color: #ccc;
+      color: #aaa;
     }
     input, select {
       width: 100%;
-      padding: 14px 16px;
-      border-radius: 12px;
-      border: 1px solid rgba(255,255,255,0.15);
-      background: rgba(0,0,0,0.3);
+      padding: 14px;
+      border-radius: 10px;
+      border: 1px solid #333;
+      background: #121218;
       color: white;
       font-size: 16px;
-      margin-bottom: 20px;
-      outline: none;
-    }
-    input:focus, select:focus {
-      border-color: #ff416c;
+      margin-bottom: 18px;
     }
     button {
       width: 100%;
-      padding: 16px;
+      padding: 15px;
       border: none;
-      border-radius: 12px;
-      background: linear-gradient(to right, #ff416c, #ff4b2b);
+      border-radius: 10px;
+      background: linear-gradient(90deg, #ff2d55, #ff9500);
       color: white;
-      font-size: 17px;
+      font-size: 16px;
       font-weight: 600;
       cursor: pointer;
-      transition: transform 0.2s, box-shadow 0.2s;
     }
     button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 20px rgba(255,65,108,0.3);
+      opacity: 0.9;
     }
-    .note {
-      margin-top: 28px;
-      padding: 16px;
-      background: rgba(0,0,0,0.25);
+    .info {
+      background: #16161d;
       border-radius: 12px;
-      font-size: 13px;
-      line-height: 1.5;
-      color: #bbb;
+      padding: 16px;
+      font-size: 14px;
+      color: #aaa;
+      line-height: 1.6;
+      margin-top: 20px;
     }
-    .note strong { color: #fff; }
+    .files {
+      margin-top: 40px;
+    }
+    .files h2 {
+      font-size: 1.2rem;
+      margin-bottom: 16px;
+      color: #ccc;
+    }
+    .file {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #1c1c24;
+      padding: 14px 18px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+      border: 1px solid #2a2a35;
+    }
+    .file a {
+      color: #ff9500;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .file a:hover {
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
-  <div class="card">
+  <div class="container">
     <h1>YouTube Downloader</h1>
-    <p class="subtitle">Powered by yt-dlp + GitHub Actions</p>
+    <p class="subtitle">Paste link → Run Action → Download from this page</p>
 
-    <label>YouTube Link</label>
-    <input type="url" id="url" placeholder="https://youtu.be/..." />
+    <div class="card">
+      <label>YouTube Link</label>
+      <input type="url" id="url" placeholder="https://youtu.be/..." />
 
-    <label>Quality</label>
-    <select id="quality">
-      <option value="best">Best Quality</option>
-      <option value="1080p">1080p</option>
-      <option value="720p">720p</option>
-      <option value="480p">480p</option>
-      <option value="mp3">Audio (MP3)</option>
-      <option value="m4a">Audio (M4A)</option>
-    </select>
+      <label>Quality</label>
+      <select id="quality">
+        <option value="best">Best Quality</option>
+        <option value="1080p">1080p</option>
+        <option value="720p">720p</option>
+        <option value="480p">480p</option>
+        <option value="mp3">MP3 (Audio)</option>
+        <option value="m4a">M4A (Audio)</option>
+      </select>
 
-    <button onclick="startDownload()">Download Video</button>
+      <button onclick="goDownload()">Download</button>
 
-    <div class="note">
-      <strong>How it works:</strong><br>
-      1. Paste the link and choose quality<br>
-      2. Click the button → Actions page will open<br>
-      3. Click <b>Run workflow</b> (URL is already filled)<br>
-      4. Wait 2–4 minutes<br>
-      5. Refresh this page → your video will appear below for download
+      <div class="info">
+        <strong>How to use:</strong><br>
+        1. Paste the YouTube link<br>
+        2. Choose quality and click <b>Download</b><br>
+        3. On the next page click the green <b>Run workflow</b> button<br>
+        4. Wait 2–5 minutes<br>
+        5. Come back and refresh this page → your video will appear below
+      </div>
+    </div>
+
+    <div class="files">
+      <h2>Downloaded Videos</h2>
+      <div id="file-list">Loading...</div>
     </div>
   </div>
 
   <script>
-    // ========== CHANGE THIS ==========
-    const GITHUB_USER = "abhayattcc";
-    const GITHUB_REPO = "Apk-builder-online-gituhb";
-    // =================================
+    // ============ CHANGE THESE TWO LINES ============
+    const USER = "abhayattcc";
+    const REPO = "Apk-builder-online-gituhb";
+    // ================================================
 
-    function startDownload() {
+    function goDownload() {
       const url = document.getElementById("url").value.trim();
       const quality = document.getElementById("quality").value;
 
       if (!url) {
-        alert("Please paste a YouTube link");
+        alert("Please paste a YouTube link first");
         return;
       }
 
-      // Open the workflow page
-      const actionsUrl = `https://github.com/${GITHUB_USER}/${GITHUB_REPO}/actions/workflows/download.yml`;
+      // Open Actions page
+      const actionsUrl = `https://github.com/${USER}/${REPO}/actions/workflows/download.yml`;
       
-      // Show instructions
       alert(
-        "Next steps:\n\n" +
-        "1. Click \"Run workflow\" on the next page\n" +
-        "2. Paste this URL: " + url + "\n" +
+        "Next step:\n\n" +
+        "1. Click the green \"Run workflow\" button\n" +
+        "2. Paste this URL:\n" + url + "\n" +
         "3. Select quality: " + quality + "\n" +
-        "4. Click the green Run workflow button\n\n" +
+        "4. Click Run workflow\n\n" +
         "After it finishes, refresh this page to download the file."
       );
 
       window.open(actionsUrl, "_blank");
     }
+
+    // Show list of already downloaded files
+    async function loadFiles() {
+      const list = document.getElementById("file-list");
+      try {
+        const res = await fetch(`https://api.github.com/repos/${USER}/${REPO}/contents/downloads`);
+        if (!res.ok) {
+          list.innerHTML = "<p style='color:#666'>No files yet. Download something first.</p>";
+          return;
+        }
+        const data = await res.json();
+        
+        if (!Array.isArray(data) || data.length === 0) {
+          list.innerHTML = "<p style='color:#666'>No files yet.</p>";
+          return;
+        }
+
+        list.innerHTML = data
+          .filter(f => f.type === "file")
+          .map(f => `
+            <div class="file">
+              <span>${f.name}</span>
+              <a href="${f.download_url}" target="_blank">Download</a>
+            </div>
+          `).join("");
+      } catch (e) {
+        list.innerHTML = "<p style='color:#666'>Could not load files.</p>";
+      }
+    }
+
+    loadFiles();
   </script>
 </body>
 </html>
