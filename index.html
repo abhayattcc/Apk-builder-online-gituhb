@@ -2,304 +2,152 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Telegram Video Downloader – GitHub Actions</title>
-  <meta name="description" content="Download Telegram videos using only GitHub Actions. No local setup needed after first configuration." />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>YouTube Downloader</title>
   <style>
-    :root {
-      --bg: #0b0f19;
-      --surface: #121826;
-      --surface-2: #1a2234;
-      --border: #2a3548;
-      --text: #e8eef7;
-      --muted: #94a3b8;
-      --accent: #38bdf8;
-      --accent-2: #818cf8;
-      --success: #34d399;
-      --warning: #fbbf24;
-      --danger: #f87171;
-      --radius: 14px;
-      --shadow: 0 10px 40px rgba(0,0,0,.35);
-    }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: 'Inter', system-ui, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      line-height: 1.6;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
       min-height: 100vh;
-      background-image:
-        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(56,189,248,.15), transparent),
-        radial-gradient(ellipse 60% 40% at 100% 0%, rgba(129,140,248,.1), transparent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      padding: 20px;
     }
-    .container { max-width: 860px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
-    header { text-align: center; margin-bottom: 2.5rem; }
-    .logo {
-      display: inline-flex; align-items: center; gap: .6rem;
-      font-size: 1.1rem; font-weight: 600; color: var(--accent); margin-bottom: 1.2rem;
-    }
-    .logo svg { width: 26px; height: 26px; }
-    h1 {
-      font-size: clamp(1.7rem, 5vw, 2.5rem); font-weight: 700;
-      letter-spacing: -0.03em; margin-bottom: .5rem;
-      background: linear-gradient(135deg, #fff 0%, #94a3b8 100%);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-    }
-    .subtitle { color: var(--muted); font-size: 1.05rem; max-width: 540px; margin: 0 auto 1.4rem; }
-    .badge {
-      display: inline-flex; align-items: center; gap: .4rem;
-      background: var(--surface-2); border: 1px solid var(--border);
-      padding: .35rem .8rem; border-radius: 999px; font-size: .8rem; color: var(--muted);
-    }
-    .badge span { color: var(--success); }
     .card {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 1.6rem; box-shadow: var(--shadow); margin-bottom: 1.4rem;
+      background: rgba(255,255,255,0.08);
+      backdrop-filter: blur(12px);
+      border-radius: 20px;
+      padding: 40px;
+      width: 100%;
+      max-width: 520px;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+      border: 1px solid rgba(255,255,255,0.1);
     }
-    .card h2 {
-      font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem;
-      display: flex; align-items: center; gap: .5rem;
+    h1 {
+      text-align: center;
+      margin-bottom: 8px;
+      font-size: 28px;
+      background: linear-gradient(to right, #ff416c, #ff4b2b);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
-    .card h2 .num {
-      background: linear-gradient(135deg, var(--accent), var(--accent-2));
-      color: #0b0f19; width: 26px; height: 26px; border-radius: 8px;
-      display: inline-flex; align-items: center; justify-content: center;
-      font-size: .85rem; font-weight: 700;
+    .subtitle {
+      text-align: center;
+      color: #aaa;
+      margin-bottom: 30px;
+      font-size: 14px;
     }
-    .steps { display: grid; gap: 1.1rem; }
-    .step { display: flex; gap: 1rem; align-items: flex-start; }
-    .step-num {
-      flex-shrink: 0; width: 30px; height: 30px;
-      background: var(--surface-2); border: 1px solid var(--border);
-      border-radius: 9px; display: flex; align-items: center; justify-content: center;
-      font-weight: 600; font-size: .85rem; color: var(--accent);
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 14px;
+      color: #ccc;
     }
-    .step p { color: var(--muted); font-size: .93rem; }
-    .step strong { color: var(--text); }
-    pre {
-      background: #0d1117; border: 1px solid var(--border); border-radius: 10px;
-      padding: 1rem 1.1rem; overflow-x: auto; font-family: 'JetBrains Mono', monospace;
-      font-size: .8rem; line-height: 1.55; margin: .6rem 0; position: relative;
+    input, select {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(0,0,0,0.3);
+      color: white;
+      font-size: 16px;
+      margin-bottom: 20px;
+      outline: none;
     }
-    .copy-btn {
-      position: absolute; top: .55rem; right: .55rem;
-      background: var(--surface-2); border: 1px solid var(--border); color: var(--muted);
-      padding: .25rem .55rem; border-radius: 6px; font-size: .72rem; cursor: pointer; font-family: inherit;
+    input:focus, select:focus {
+      border-color: #ff416c;
     }
-    .copy-btn:hover { color: var(--text); border-color: var(--accent); }
+    button {
+      width: 100%;
+      padding: 16px;
+      border: none;
+      border-radius: 12px;
+      background: linear-gradient(to right, #ff416c, #ff4b2b);
+      color: white;
+      font-size: 17px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(255,65,108,0.3);
+    }
     .note {
-      background: rgba(251,191,36,.08); border: 1px solid rgba(251,191,36,.25);
-      border-radius: 10px; padding: .85rem 1rem; font-size: .87rem; color: #fde68a; margin-top: 1rem;
+      margin-top: 28px;
+      padding: 16px;
+      background: rgba(0,0,0,0.25);
+      border-radius: 12px;
+      font-size: 13px;
+      line-height: 1.5;
+      color: #bbb;
     }
-    .success-box {
-      background: rgba(52,211,153,.08); border: 1px solid rgba(52,211,153,.3);
-      border-radius: 10px; padding: .85rem 1rem; font-size: .9rem; color: #6ee7b7; margin-top: .8rem;
-    }
-    .input-group { display: flex; gap: .7rem; margin-bottom: .8rem; flex-wrap: wrap; }
-    input[type="url"] {
-      flex: 1; min-width: 200px; background: var(--surface-2); border: 1px solid var(--border);
-      color: var(--text); padding: .8rem 1rem; border-radius: 10px; font-size: .93rem;
-      font-family: inherit; outline: none;
-    }
-    input[type="url"]:focus { border-color: var(--accent); }
-    button.primary {
-      background: linear-gradient(135deg, var(--accent), var(--accent-2));
-      color: #0b0f19; border: none; padding: .8rem 1.3rem; border-radius: 10px;
-      font-weight: 600; font-size: .93rem; cursor: pointer;
-    }
-    button.primary:hover { opacity: .92; }
-    .result {
-      display: none; background: var(--surface-2); border: 1px solid var(--border);
-      border-radius: 10px; padding: 1rem; margin-top: .8rem; font-size: .9rem;
-    }
-    .result.show { display: block; }
-    .result.success { border-color: rgba(52,211,153,.4); }
-    .result.error { border-color: rgba(248,113,113,.4); }
-    code {
-      font-family: 'JetBrains Mono', monospace; font-size: .82rem;
-      background: rgba(0,0,0,.3); padding: .12rem .35rem; border-radius: 4px;
-    }
-    footer {
-      text-align: center; margin-top: 2.8rem; color: var(--muted); font-size: .84rem;
-    }
-    footer a { color: var(--accent); text-decoration: none; }
-    footer a:hover { text-decoration: underline; }
-    @media (max-width: 600px) {
-      .input-group { flex-direction: column; }
-      button.primary { width: 100%; }
-    }
+    .note strong { color: #fff; }
   </style>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <div class="logo">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M22 2L11 13"></path>
-          <path d="M22 2L15 22L11 13L2 9L22 2Z"></path>
-        </svg>
-        Telegram Downloader
-      </div>
-      <h1>Download with GitHub Actions Only</h1>
-      <p class="subtitle">
-        Paste any public Telegram link → trigger a GitHub Action → download the video as an artifact.
-        No local Python needed after setup.
-      </p>
-      <div class="badge"><span>●</span> Powered 100% by GitHub Actions</div>
-    </header>
+  <div class="card">
+    <h1>YouTube Downloader</h1>
+    <p class="subtitle">Powered by yt-dlp + GitHub Actions</p>
 
-    <!-- Link helper -->
-    <div class="card">
-      <h2><span class="num">0</span> Paste your Telegram link</h2>
-      <div class="input-group">
-        <input type="url" id="tgLink" placeholder="https://t.me/odiamahabharat/154" value="https://t.me/odiamahabharat/154" />
-        <button class="primary" onclick="checkLink()">Validate Link</button>
-      </div>
-      <div id="result" class="result"></div>
+    <label>YouTube Link</label>
+    <input type="url" id="url" placeholder="https://youtu.be/..." />
+
+    <label>Quality</label>
+    <select id="quality">
+      <option value="best">Best Quality</option>
+      <option value="1080p">1080p</option>
+      <option value="720p">720p</option>
+      <option value="480p">480p</option>
+      <option value="mp3">Audio (MP3)</option>
+      <option value="m4a">Audio (M4A)</option>
+    </select>
+
+    <button onclick="startDownload()">Download Video</button>
+
+    <div class="note">
+      <strong>How it works:</strong><br>
+      1. Paste the link and choose quality<br>
+      2. Click the button → Actions page will open<br>
+      3. Click <b>Run workflow</b> (URL is already filled)<br>
+      4. Wait 2–4 minutes<br>
+      5. Refresh this page → your video will appear below for download
     </div>
-
-    <!-- One-time Setup -->
-    <div class="card">
-      <h2><span class="num">1</span> One-time Setup (only once)</h2>
-      <div class="steps">
-        <div class="step">
-          <div class="step-num">1</div>
-          <div>
-            <p><strong>Push this repo to GitHub</strong><br>
-            Create a new repository and push all files to the <code>main</code> branch.</p>
-          </div>
-        </div>
-        <div class="step">
-          <div class="step-num">2</div>
-          <div>
-            <p><strong>Add Secrets</strong> (Settings → Secrets and variables → Actions)</p>
-            <p style="margin-top:.4rem">Create these two secrets:</p>
-            <pre>TELEGRAM_API_ID     → your api_id (number)
-TELEGRAM_API_HASH   → your api_hash (string)</pre>
-            <p style="font-size:.85rem;margin-top:.3rem">Optional but recommended: <code>TELEGRAM_SESSION</code> (StringSession – see README)</p>
-          </div>
-        </div>
-        <div class="step">
-          <div class="step-num">3</div>
-          <div>
-            <p><strong>Enable GitHub Pages</strong><br>
-            Settings → Pages → Source = <strong>GitHub Actions</strong></p>
-          </div>
-        </div>
-      </div>
-      <div class="note">
-        ⚠️ Never put your API_ID / API_HASH in the code. Always use GitHub Secrets.
-      </div>
-    </div>
-
-    <!-- How to download -->
-    <div class="card">
-      <h2><span class="num">2</span> How to Download any Telegram Video</h2>
-      <div class="steps">
-        <div class="step">
-          <div class="step-num">1</div>
-          <div>
-            <p>Go to your repository → <strong>Actions</strong> tab</p>
-          </div>
-        </div>
-        <div class="step">
-          <div class="step-num">2</div>
-          <div>
-            <p>Click <strong>“Download Telegram Media”</strong> on the left</p>
-          </div>
-        </div>
-        <div class="step">
-          <div class="step-num">3</div>
-          <div>
-            <p>Click <strong>“Run workflow”</strong></p>
-          </div>
-        </div>
-        <div class="step">
-          <div class="step-num">4</div>
-          <div>
-            <p>Paste the Telegram link (example below) and click <strong>Run workflow</strong></p>
-            <pre id="example-link"><button class="copy-btn" onclick="copyText('https://t.me/odiamahabharat/154')">Copy</button>https://t.me/odiamahabharat/154</pre>
-          </div>
-        </div>
-        <div class="step">
-          <div class="step-num">5</div>
-          <div>
-            <p>Wait 30–90 seconds → open the finished run → download the <strong>telegram-media</strong> artifact</p>
-          </div>
-        </div>
-      </div>
-      <div class="success-box">
-        ✅ The video/file will appear as a downloadable artifact on the Actions run page.
-      </div>
-    </div>
-
-    <!-- Local fallback -->
-    <div class="card">
-      <h2><span class="num">3</span> Local fallback (optional)</h2>
-      <p style="color:var(--muted);font-size:.93rem;margin-bottom:.7rem">
-        You can also run it on your computer:
-      </p>
-      <pre id="local-cmd"><button class="copy-btn" onclick="copyCode('local-cmd')">Copy</button>export TELEGRAM_API_ID=your_api_id
-export TELEGRAM_API_HASH=your_api_hash
-python telegram_downloader.py "https://t.me/odiamahabharat/154"</pre>
-    </div>
-
-    <footer>
-      <p>100% GitHub Actions powered · No server needed</p>
-      <p style="margin-top:.35rem;font-size:.8rem">
-        For personal use only. Respect Telegram ToS and copyrights.
-      </p>
-    </footer>
   </div>
 
   <script>
-    function checkLink() {
-      const input = document.getElementById('tgLink');
-      const result = document.getElementById('result');
-      const link = input.value.trim();
-      const regex = /^https?:\/\/t\.me\/(?:c\/)?[a-zA-Z0-9_]+\/\d+/i;
+    // ========== CHANGE THIS ==========
+    const GITHUB_USER = "abhayattcc";
+    const GITHUB_REPO = "Apk-builder-online-gituhb";
+    // =================================
 
-      if (!link) {
-        result.className = 'result error show';
-        result.innerHTML = '❌ Please paste a Telegram link.';
-        return;
-      }
-      if (!regex.test(link)) {
-        result.className = 'result error show';
-        result.innerHTML = '❌ Invalid format. Use: <code>https://t.me/channel/123</code>';
+    function startDownload() {
+      const url = document.getElementById("url").value.trim();
+      const quality = document.getElementById("quality").value;
+
+      if (!url) {
+        alert("Please paste a YouTube link");
         return;
       }
 
-      result.className = 'result success show';
-      result.innerHTML = `
-        ✅ Valid link detected.<br><br>
-        <strong>Now go to Actions → “Download Telegram Media” → Run workflow</strong><br>
-        and paste this link:<br>
-        <code style="display:block;margin-top:.5rem;padding:.55rem;background:rgba(0,0,0,.35);border-radius:6px;">${link}</code>
-      `;
-    }
+      // Open the workflow page
+      const actionsUrl = `https://github.com/${GITHUB_USER}/${GITHUB_REPO}/actions/workflows/download.yml`;
+      
+      // Show instructions
+      alert(
+        "Next steps:\n\n" +
+        "1. Click \"Run workflow\" on the next page\n" +
+        "2. Paste this URL: " + url + "\n" +
+        "3. Select quality: " + quality + "\n" +
+        "4. Click the green Run workflow button\n\n" +
+        "After it finishes, refresh this page to download the file."
+      );
 
-    function copyText(text) {
-      navigator.clipboard.writeText(text);
+      window.open(actionsUrl, "_blank");
     }
-
-    function copyCode(id) {
-      const el = document.getElementById(id);
-      const text = el.innerText.replace(/^Copy\n?/, '').trim();
-      navigator.clipboard.writeText(text).then(() => {
-        const btn = el.querySelector('.copy-btn');
-        if (btn) {
-          const old = btn.textContent;
-          btn.textContent = 'Copied!';
-          setTimeout(() => btn.textContent = old, 1400);
-        }
-      });
-    }
-
-    window.addEventListener('DOMContentLoaded', checkLink);
   </script>
 </body>
 </html>
