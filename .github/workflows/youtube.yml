@@ -26,7 +26,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
+  group: "pages"
   cancel-in-progress: false
 
 jobs:
@@ -41,7 +41,7 @@ jobs:
       - name: Setup yt-dlp + FFmpeg
         uses: AnimMouse/setup-yt-dlp@v3
 
-      - name: Download
+      - name: Download Video
         run: |
           mkdir -p downloads
           
@@ -50,43 +50,40 @@ jobs:
 
           case $QUALITY in
             "best")
-              yt-dlp -f "bv*+ba/b" --merge-output-format mp4 \
-                --no-playlist \
-                -o "downloads/%(title).150B [%(id)s].%(ext)s" "$URL"
+              yt-dlp -f "bv*+ba/b" --merge-output-format mp4 --no-playlist \
+                -o "downloads/%(title).120B [%(id)s].%(ext)s" "$URL"
               ;;
             "1080p")
-              yt-dlp -f "bv*[height<=1080]+ba/b" --merge-output-format mp4 \
-                --no-playlist \
-                -o "downloads/%(title).150B [%(id)s].%(ext)s" "$URL"
+              yt-dlp -f "bv*[height<=1080]+ba/b" --merge-output-format mp4 --no-playlist \
+                -o "downloads/%(title).120B [%(id)s].%(ext)s" "$URL"
               ;;
             "720p")
-              yt-dlp -f "bv*[height<=720]+ba/b" --merge-output-format mp4 \
-                --no-playlist \
-                -o "downloads/%(title).150B [%(id)s].%(ext)s" "$URL"
+              yt-dlp -f "bv*[height<=720]+ba/b" --merge-output-format mp4 --no-playlist \
+                -o "downloads/%(title).120B [%(id)s].%(ext)s" "$URL"
               ;;
             "480p")
-              yt-dlp -f "bv*[height<=480]+ba/b" --merge-output-format mp4 \
-                --no-playlist \
-                -o "downloads/%(title).150B [%(id)s].%(ext)s" "$URL"
+              yt-dlp -f "bv*[height<=480]+ba/b" --merge-output-format mp4 --no-playlist \
+                -o "downloads/%(title).120B [%(id)s].%(ext)s" "$URL"
               ;;
             "mp3")
               yt-dlp -x --audio-format mp3 --no-playlist \
-                -o "downloads/%(title).150B [%(id)s].%(ext)s" "$URL"
+                -o "downloads/%(title).120B [%(id)s].%(ext)s" "$URL"
               ;;
             "m4a")
               yt-dlp -x --audio-format m4a --no-playlist \
-                -o "downloads/%(title).150B [%(id)s].%(ext)s" "$URL"
+                -o "downloads/%(title).120B [%(id)s].%(ext)s" "$URL"
               ;;
           esac
 
+          echo "Downloaded files:"
           ls -lh downloads/
 
-      - name: Commit files
+      - name: Commit
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add downloads/
-          git commit -m "Downloaded: ${{ github.event.inputs.url }}" || echo "No changes to commit"
+          git commit -m "Download: ${{ github.event.inputs.url }}" || echo "Nothing to commit"
           git push
 
   deploy:
@@ -97,13 +94,12 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
-      - name: Upload Pages artifact
+      - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: downloads
