@@ -1,0 +1,412 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- res/layout/main.xml -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#121212"
+    android:fitsSystemWindows="true"
+    android:orientation="vertical">
+
+    <!-- ===== TOP BAR ===== -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="6dp"
+        android:paddingEnd="6dp">
+
+        <Button
+            android:id="@+id/btnUndo"
+            style="?android:attr/buttonBarButtonStyle"
+            android:layout_width="40dp"
+            android:layout_height="wrap_content"
+            android:minWidth="0dp"
+            android:text="↶"
+            android:textColor="#FFFFFF"
+            android:textSize="20sp" />
+
+        <Button
+            android:id="@+id/btnRedo"
+            style="?android:attr/buttonBarButtonStyle"
+            android:layout_width="40dp"
+            android:layout_height="wrap_content"
+            android:minWidth="0dp"
+            android:text="↷"
+            android:textColor="#FFFFFF"
+            android:textSize="20sp" />
+
+        <Spinner
+            android:id="@+id/spinRatio"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+
+        <Switch
+            android:id="@+id/swFill"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Fill "
+            android:textColor="#CCCCCC"
+            android:textSize="12sp" />
+
+        <Button
+            android:id="@+id/btnExport"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:layout_marginStart="8dp"
+            android:backgroundTint="#3D5AFE"
+            android:text="Export"
+            android:textColor="#FFFFFF" />
+    </LinearLayout>
+
+    <!-- ===== PREVIEW ===== -->
+    <FrameLayout
+        android:id="@+id/previewFrame"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="3"
+        android:background="#000000">
+
+        <SurfaceView
+            android:id="@+id/previewSurface"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="center" />
+
+        <TextView
+            android:id="@+id/txtEmpty"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:text="Tap “🎬 Video” to add your first clip"
+            android:textColor="#888888"
+            android:textSize="14sp" />
+    </FrameLayout>
+
+    <!-- ===== PLAYBACK BAR ===== -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="6dp"
+        android:paddingEnd="10dp">
+
+        <Button
+            android:id="@+id/btnPlay"
+            style="?android:attr/buttonBarButtonStyle"
+            android:layout_width="44dp"
+            android:layout_height="wrap_content"
+            android:minWidth="0dp"
+            android:text="▶"
+            android:textColor="#FFFFFF"
+            android:textSize="18sp" />
+
+        <SeekBar
+            android:id="@+id/seekPlay"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:max="1000" />
+
+        <TextView
+            android:id="@+id/txtTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:text="00:00.0 / 00:00.0"
+            android:textColor="#CCCCCC"
+            android:textSize="11sp" />
+    </LinearLayout>
+
+    <!-- ===== TIMELINE (4 tracks) ===== -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="132dp"
+        android:background="#1B1B1B">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="44dp"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:text="VIDEO"
+                    android:textColor="#888888"
+                    android:textSize="9sp" />
+
+                <HorizontalScrollView
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scrollbars="none">
+
+                    <LinearLayout
+                        android:id="@+id/trackMain"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:orientation="horizontal" />
+                </HorizontalScrollView>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="44dp"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:text="LAYERS"
+                    android:textColor="#888888"
+                    android:textSize="9sp" />
+
+                <HorizontalScrollView
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scrollbars="none">
+
+                    <LinearLayout
+                        android:id="@+id/trackOver"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:orientation="horizontal" />
+                </HorizontalScrollView>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="44dp"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:text="TEXT"
+                    android:textColor="#888888"
+                    android:textSize="9sp" />
+
+                <HorizontalScrollView
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scrollbars="none">
+
+                    <LinearLayout
+                        android:id="@+id/trackText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:orientation="horizontal" />
+                </HorizontalScrollView>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="44dp"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:text="AUDIO"
+                    android:textColor="#888888"
+                    android:textSize="9sp" />
+
+                <HorizontalScrollView
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scrollbars="none">
+
+                    <LinearLayout
+                        android:id="@+id/trackAudio"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:orientation="horizontal" />
+                </HorizontalScrollView>
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+
+    <!-- ===== ACTION BAR ===== -->
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:background="#222222"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:orientation="horizontal">
+
+            <Button android:id="@+id/btnAddVideo" style="?android:attr/buttonBarButtonStyle" android:layout_width="wrap_content" android:layout_height="match_parent" android:minWidth="0dp" android:text="🎬 Video" android:textColor="#FFFFFF" android:textSize="12sp" />
+            <Button android:id="@+id/btnAddOverlay" style="?android:attr/buttonBarButtonStyle" android:layout_width="wrap_content" android:layout_height="match_parent" android:minWidth="0dp" android:text="🖼 Layer" android:textColor="#FFFFFF" android:textSize="12sp" />
+            <Button android:id="@+id/btnAddAudio" style="?android:attr/buttonBarButtonStyle" android:layout_width="wrap_content" android:layout_height="match_parent" android:minWidth="0dp" android:text="🎵 Audio" android:textColor="#FFFFFF" android:textSize="12sp" />
+            <Button android:id="@+id/btnAddText" style="?android:attr/buttonBarButtonStyle" android:layout_width="wrap_content" android:layout_height="match_parent" android:minWidth="0dp" android:text="🅣 Text" android:textColor="#FFFFFF" android:textSize="12sp" />
+            <Button android:id="@+id/btnSplit" style="?android:attr/buttonBarButtonStyle" android:layout_width="wrap_content" android:layout_height="match_parent" android:minWidth="0dp" android:text="✂ Split" android:textColor="#FFFFFF" android:textSize="12sp" />
+            <Button android:id="@+id/btnDuplicate" style="?android:attr/buttonBarButtonStyle" android:layout_width="wrap_content" android:layout_height="match_parent" android:minWidth="0dp" android:text="⧉ Copy" android:textColor="#FFFFFF" android:textSize="12sp" />
+            <Button android:id="@+id/btnMoveLeft" style="?android:attr/buttonBarButtonStyle" android:layout_width="wrap_content" android:layout_height="match_parent" android:minWidth="0dp" android:text="◀" android:textColor="#FFFFFF" android:textSize="12sp" />
+            <Button android:id="@+id/btnMoveRight" style="?android:attr/buttonBarButtonStyle" android:layout_width="wrap_content" android:layout_height="match_parent" android:minWidth="0dp" android:text="▶" android:textColor="#FFFFFF" android:textSize="12sp" />
+            <Button android:id="@+id/btnDelete" style="?android:attr/buttonBarButtonStyle" android:layout_width="wrap_content" android:layout_height="match_parent" android:minWidth="0dp" android:text="🗑 Delete" android:textColor="#FF6E6E" android:textSize="12sp" />
+        </LinearLayout>
+    </HorizontalScrollView>
+
+    <!-- ===== TOOLS PANEL ===== -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="2.2"
+        android:background="#181818">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="10dp">
+
+            <TextView
+                android:id="@+id/txtSelected"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Select a clip on the timeline to edit it"
+                android:textColor="#FFFFFF"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <!-- TRIM -->
+            <LinearLayout android:id="@+id/secTrim" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="gone">
+                <TextView android:id="@+id/txtTrim" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="Trim" android:textColor="#BBBBBB" android:textSize="12sp" />
+                <SeekBar android:id="@+id/seekTrimStart" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="1000" />
+                <SeekBar android:id="@+id/seekTrimEnd" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="1000" />
+            </LinearLayout>
+
+            <!-- DURATION (image/text) -->
+            <LinearLayout android:id="@+id/secDuration" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="gone">
+                <TextView android:id="@+id/txtDuration" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="Duration" android:textColor="#BBBBBB" android:textSize="12sp" />
+                <SeekBar android:id="@+id/seekDuration" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="300" />
+            </LinearLayout>
+
+            <!-- START OFFSET -->
+            <LinearLayout android:id="@+id/secOffset" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="gone">
+                <TextView android:id="@+id/txtOffset" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="Starts at" android:textColor="#BBBBBB" android:textSize="12sp" />
+                <SeekBar android:id="@+id/seekOffset" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="1800" />
+            </LinearLayout>
+
+            <!-- SPEED -->
+            <LinearLayout android:id="@+id/secSpeed" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="gone">
+                <TextView android:id="@+id/txtSpeed" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="Speed 1.0x" android:textColor="#BBBBBB" android:textSize="12sp" />
+                <SeekBar android:id="@+id/seekSpeed" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="75" />
+            </LinearLayout>
+
+            <!-- VOLUME -->
+            <LinearLayout android:id="@+id/secVolume" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="gone">
+                <TextView android:id="@+id/txtVolume" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="Volume 100%" android:textColor="#BBBBBB" android:textSize="12sp" />
+                <SeekBar android:id="@+id/seekVolume" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="200" />
+            </LinearLayout>
+
+            <!-- ROTATE / FLIP -->
+            <LinearLayout android:id="@+id/secRotate" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="8dp" android:visibility="gone">
+                <Button android:id="@+id/btnRotate" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="⟳ Rotate 90°" android:textSize="12sp" />
+                <Button android:id="@+id/btnFlipH" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="⇋ Flip H" android:textSize="12sp" />
+                <Button android:id="@+id/btnFlipV" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="⇅ Flip V" android:textSize="12sp" />
+            </LinearLayout>
+
+            <!-- LAYER TRANSFORM -->
+            <LinearLayout android:id="@+id/secTransform" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="gone">
+                <TextView android:id="@+id/txtScale" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="Layer size 100%" android:textColor="#BBBBBB" android:textSize="12sp" />
+                <SeekBar android:id="@+id/seekScale" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="300" />
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Position X" android:textColor="#BBBBBB" android:textSize="12sp" />
+                <SeekBar android:id="@+id/seekPosX" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="200" />
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Position Y" android:textColor="#BBBBBB" android:textSize="12sp" />
+                <SeekBar android:id="@+id/seekPosY" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="200" />
+                <TextView android:id="@+id/txtOpacity" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Opacity 100%" android:textColor="#BBBBBB" android:textSize="12sp" />
+                <SeekBar android:id="@+id/seekOpacity" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="100" />
+            </LinearLayout>
+
+            <!-- COLOR ADJUST + FILTER -->
+            <LinearLayout android:id="@+id/secAdjust" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="gone">
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="Filter" android:textColor="#BBBBBB" android:textSize="12sp" />
+                <Spinner android:id="@+id/spinFilter" android:layout_width="match_parent" android:layout_height="wrap_content" />
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Brightness" android:textColor="#BBBBBB" android:textSize="12sp" />
+                <SeekBar android:id="@+id/seekBright" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="200" />
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Contrast" android:textColor="#BBBBBB" android:textSize="12sp" />
+                <SeekBar android:id="@+id/seekContrast" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="200" />
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Saturation" android:textColor="#BBBBBB" android:textSize="12sp" />
+                <SeekBar android:id="@+id/seekSat" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="200" />
+            </LinearLayout>
+
+            <!-- CHROMA KEY -->
+            <LinearLayout android:id="@+id/secChroma" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="gone">
+                <Switch android:id="@+id/swChroma" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="10dp" android:text="Chroma key (green / blue screen)" android:textColor="#FFFFFF" android:textSize="13sp" />
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal">
+                    <View android:id="@+id/viewKey" android:layout_width="28dp" android:layout_height="28dp" android:layout_marginEnd="8dp" android:background="#00B140" />
+                    <Button android:id="@+id/btnKeyGreen" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Green" android:textSize="12sp" />
+                    <Button android:id="@+id/btnKeyBlue" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Blue" android:textSize="12sp" />
+                    <Button android:id="@+id/btnEyedrop" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1.3" android:text="💧 Pick" android:textSize="12sp" />
+                </LinearLayout>
+                <TextView android:id="@+id/txtSim" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Similarity" android:textColor="#BBBBBB" android:textSize="12sp" />
+                <SeekBar android:id="@+id/seekSim" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="100" />
+                <TextView android:id="@+id/txtSmooth" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Edge smoothness" android:textColor="#BBBBBB" android:textSize="12sp" />
+                <SeekBar android:id="@+id/seekSmooth" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="100" />
+                <TextView android:id="@+id/txtSpill" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Spill suppression" android:textColor="#BBBBBB" android:textSize="12sp" />
+                <SeekBar android:id="@+id/seekSpill" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="100" />
+            </LinearLayout>
+
+            <!-- TEXT -->
+            <LinearLayout android:id="@+id/secText" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="gone">
+                <EditText android:id="@+id/edtText" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:hint="Type your text" android:inputType="textMultiLine" android:textColor="#FFFFFF" android:textColorHint="#777777" />
+                <Button android:id="@+id/btnTextColor" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Change text colour" android:textSize="12sp" />
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Text size" android:textColor="#BBBBBB" android:textSize="12sp" />
+                <SeekBar android:id="@+id/seekTextSize" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="200" />
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+
+    <!-- ===== EXPORT PANEL (hidden until Export is tapped) ===== -->
+    <LinearLayout
+        android:id="@+id/panelExport"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#262626"
+        android:orientation="vertical"
+        android:padding="10dp"
+        android:visibility="gone">
+
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Export settings" android:textColor="#FFFFFF" android:textSize="14sp" android:textStyle="bold" />
+
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+            <Spinner android:id="@+id/spinRes" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" />
+            <Spinner android:id="@+id/spinFps" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" />
+        </LinearLayout>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+            <Spinner android:id="@+id/spinCodec" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" />
+            <Spinner android:id="@+id/spinQuality" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" />
+        </LinearLayout>
+
+        <ProgressBar
+            android:id="@+id/progressExport"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:max="100"
+            android:visibility="gone" />
+
+        <TextView android:id="@+id/txtExportStatus" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="#BBBBBB" android:textSize="12sp" />
+
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+            <Button android:id="@+id/btnStartExport" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:backgroundTint="#3D5AFE" android:text="Start export" android:textColor="#FFFFFF" />
+            <Button android:id="@+id/btnCancelExport" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Cancel / Close" />
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>
