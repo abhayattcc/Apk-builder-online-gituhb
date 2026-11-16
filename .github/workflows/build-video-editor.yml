@@ -23,11 +23,14 @@ jobs:
         env:
           REGEN: ${{ inputs.regenerate }}
         run: |
-          if [ -f app/build.gradle ] && [ "$REGEN" != "true" ]; then
-            echo "Project files already exist - skipping creation"
+          test -f create-video-editor.sh || { echo "Upload create-video-editor.sh to the repo root"; exit 1; }
+          HASH=$(sha256sum create-video-editor.sh | cut -d' ' -f1)
+          # Skip only if project exists, was made from this exact script, and no forced regenerate
+          if [ -f app/build.gradle ] && [ -f .project-source-hash ] \
+             && [ "$(cat .project-source-hash)" = "$HASH" ] && [ "$REGEN" != "true" ]; then
+            echo "Project files already up to date - skipping creation"
             exit 0
           fi
-          test -f create-video-editor.sh || { echo "Upload create-video-editor.sh to the repo root"; exit 1; }
 
           # Keep only the file-generation part of the script (no git/gh, no push)
           sed -e '/^command -v git /d' \
@@ -43,6 +46,7 @@ jobs:
 
           # The script makes its own build.yml; this workflow replaces it
           rm -f .github/workflows/build.yml
+          echo "$HASH" > .project-source-hash
           if [ -f "$RUNNER_TEMP/gitignore.old" ]; then cat "$RUNNER_TEMP/gitignore.old" >> .gitignore; fi
 
           find . -path ./.git -prune -o -type f -print | sort
