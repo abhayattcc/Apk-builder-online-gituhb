@@ -550,7 +550,11 @@ package com.example.videoeditor;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ContentValues;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -601,8 +605,9 @@ import androidx.media3.common.MediaItem;
 import androidx.media3.common.MimeTypes;
 import androidx.media3.common.PlaybackException;
 import androidx.media3.common.Player;
-import androidx.media3.common.VideoCompositorSettings;
+import androidx.media3.effect.VideoCompositorSettings;
 import androidx.media3.common.VideoFrameProcessingException;
+import androidx.media3.common.VideoSize;
 import androidx.media3.common.audio.AudioProcessor;
 import androidx.media3.common.audio.ChannelMixingAudioProcessor;
 import androidx.media3.common.audio.ChannelMixingMatrix;
@@ -626,6 +631,7 @@ import androidx.media3.effect.RgbMatrix;
 import androidx.media3.effect.ScaleAndRotateTransformation;
 import androidx.media3.effect.SpeedChangeEffect;
 import androidx.media3.effect.TextureOverlay;
+import androidx.media3.exoplayer.ExoPlayer;
 import androidx.media3.transformer.Composition;
 import androidx.media3.transformer.CompositionPlayer;
 import androidx.media3.transformer.DefaultEncoderFactory;
@@ -643,6 +649,8 @@ import com.google.common.collect.ImmutableList;
 import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.io.FileInputStream;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -729,7 +737,10 @@ public class MainActivity extends Activity {
     private LinearLayout trackMain, trackOver, trackAudio, trackText;
     private View panelExport;
     private ProgressBar progressExport;
-    private CompositionPlayer player;
+    private Player player;                       // CompositionPlayer (full) or ExoPlayer (simple)
+    private boolean simplePreview = false, forceSimple = false;
+    private float simpleAspect = 0f;
+    private static final String PREFS = "ve";
     private Transformer transformer;
     private boolean exporting = false, userSeeking = false;
 
@@ -737,6 +748,13 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle b) {
         super.onCreate(b);
+        installCrashLogger();
+        SharedPreferences sp0 = getSharedPreferences(PREFS, MODE_PRIVATE);
+        if (sp0.getBoolean("full_preview_pending", false)) {
+            // last run died while the full preview was starting -> stay on the simple preview
+            sp0.edit().putBoolean("force_simple", true).putBoolean("full_preview_pending", false).commit();
+        }
+        forceSimple = sp0.getBoolean("force_simple", false);
         setContentView(R.layout.main);
 
         surface = findViewById(R.id.previewSurface);
@@ -763,12 +781,44 @@ public class MainActivity extends Activity {
         renderTimeline();
         bindSelectionToUi();
         ui.post(progressTicker);
+        showPreviousCrash();
+    }
+
+    private void installCrashLogger() {
+        final Thread.UncaughtExceptionHandler prev = Thread.getDefaultUncaughtExceptionHandler();
+        Thread.setDefaultUncaughtExceptionHandler((t, e) -> {
+            try {
+                StringWriter sw = new StringWriter();
+                e.printStackTrace(new PrintWriter(sw));
+                getSharedPreferences(PREFS, MODE_PRIVATE).edit()
+                        .putString("last_crash", "Thread: " + t.getName() + "\n" + sw).commit();
+            } catch (Throwable ignored) { }
+            if (prev != null) prev.uncaughtException(t, e);
+        });
+    }
+
+    private void showPreviousCrash() {
+        SharedPreferences sp = getSharedPreferences(PREFS, MODE_PRIVATE);
+        final String crash = sp.getString("last_crash", null);
+        if (crash == null) return;
+        sp.edit().remove("last_crash").commit();
+        new AlertDialog.Builder(this)
+                .setTitle("The app crashed last time")
+                .setMessage(crash.length() > 3500 ? crash.substring(0, 3500) : crash)
+                .setPositiveButton("Copy", (d, w) -> {
+                    ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                    if (cm != null) cm.setPrimaryClip(ClipData.newPlainText("crash", crash));
+                    toast("Crash report copied");
+                })
+                .setNegativeButton("Close", null)
+                .show();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        if (player != null) player.pause();
+        getSharedPreferences(PREFS, MODE_PRIVATE).edit().putBoolean("full_preview_pending", false).apply();
+        try { if (player != null) player.pause(); } catch (Throwable ignored) { }
     }
 
     @Override
@@ -801,7 +851,7 @@ public class MainActivity extends Activity {
     private void fitPreview() {
         int fw = previewFrame.getWidth(), fh = previewFrame.getHeight();
         if (fw == 0 || fh == 0) return;
-        float ar = RATIOS[ratioIdx][0] / RATIOS[ratioIdx][1];
+        float ar = (simplePreview && simpleAspect > 0f) ? simpleAspect : RATIOS[ratioIdx][0] / RATIOS[ratioIdx][1];
         int w = fw, h = Math.round(fw / ar);
         if (h > fh) { h = fh; w = Math.round(fh * ar); }
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(w, h, Gravity.CENTER);
@@ -829,11 +879,18 @@ public class MainActivity extends Activity {
     private void setupPlayback() {
         btnPlay.setOnClickListener(v -> {
             if (player == null) { scheduleRefresh(); return; }
-            if (player.isPlaying()) player.pause(); else player.play();
+            try { if (player.isPlaying()) player.pause(); else player.play(); } catch (Throwable t) { toast("Playback error: " + t); }
+        });
+        btnPlay.setOnLongClickListener(v -> {
+            forceSimple = !forceSimple;
+            getSharedPreferences(PREFS, MODE_PRIVATE).edit().putBoolean("force_simple", forceSimple).commit();
+            toast(forceSimple ? "Simple preview ON (main video only)" : "Full preview ON (all layers)");
+            scheduleRefresh();
+            return true;
         });
         seekPlay.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override public void onProgressChanged(SeekBar s, int p, boolean fromUser) {
-                if (fromUser && player != null) player.seekTo(totalMs() * p / 1000L);
+                if (fromUser && player != null) seekGlobal(previewTotalMs() * p / 1000L);
             }
             @Override public void onStartTrackingTouch(SeekBar s) { userSeeking = true; }
             @Override public void onStopTrackingTouch(SeekBar s) { userSeeking = false; }
@@ -842,27 +899,29 @@ public class MainActivity extends Activity {
 
     private final Runnable progressTicker = new Runnable() {
         @Override public void run() {
-            long total = Math.max(1, totalMs());
-            if (player != null && !userSeeking) {
-                long pos = Math.min(player.getCurrentPosition(), total);
-                seekPlay.setProgress((int) (pos * 1000 / total));
-                txtTime.setText(fmt(pos) + " / " + fmt(total));
-            } else if (player == null) {
-                txtTime.setText(fmt(0) + " / " + fmt(totalMs()));
-            }
-            if (exporting && transformer != null) {
-                ProgressHolder ph = new ProgressHolder();
-                int st = transformer.getProgress(ph);
-                if (st != Transformer.PROGRESS_STATE_NOT_STARTED) {
-                    progressExport.setProgress(ph.progress);
-                    txtExportStatus.setText("Exporting… " + ph.progress + "%");
+            try {
+                long total = Math.max(1, previewTotalMs());
+                if (player != null && !userSeeking) {
+                    long pos = Math.min(curPos(), total);
+                    seekPlay.setProgress((int) (pos * 1000 / total));
+                    txtTime.setText(fmt(pos) + " / " + fmt(total));
+                } else if (player == null) {
+                    txtTime.setText(fmt(0) + " / " + fmt(totalMs()));
                 }
-            }
+                if (exporting && transformer != null) {
+                    ProgressHolder ph = new ProgressHolder();
+                    int st = transformer.getProgress(ph);
+                    if (st != Transformer.PROGRESS_STATE_NOT_STARTED) {
+                        progressExport.setProgress(ph.progress);
+                        txtExportStatus.setText("Exporting… " + ph.progress + "%");
+                    }
+                }
+            } catch (Throwable ignored) { }
             ui.postDelayed(this, 250);
         }
     };
 
-    private long playhead() { return player != null ? player.getCurrentPosition() : 0; }
+    private long playhead() { return curPos(); }
 
     // ================================================================== setup: add / edit buttons
     private void setupActionBar() {
@@ -942,18 +1001,26 @@ public class MainActivity extends Activity {
                     c.thumb = decodeThumb(uri);
                 } else {
                     MediaMetadataRetriever r = new MediaMetadataRetriever();
-                    r.setDataSource(this, uri);
-                    String d = r.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
-                    c.srcDurMs = d == null ? 5000 : Long.parseLong(d);
-                    boolean isAudio = (mime != null && mime.startsWith("audio/"))
-                            || "yes".equals(r.extractMetadata(MediaMetadataRetriever.METADATA_KEY_HAS_AUDIO)) && r.extractMetadata(MediaMetadataRetriever.METADATA_KEY_HAS_VIDEO) == null;
-                    c.type = isAudio ? T_AUDIO : T_VIDEO;
-                    if (!isAudio) c.thumb = r.getScaledFrameAtTime(0, MediaMetadataRetriever.OPTION_CLOSEST_SYNC, 160, 160);
-                    c.trimStart = 0; c.trimEnd = c.srcDurMs;
-                    r.release();
+                    try {
+                        r.setDataSource(this, uri);
+                        String d = r.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
+                        long dur = 5000;
+                        try { if (d != null) dur = Long.parseLong(d); } catch (NumberFormatException ignored) { }
+                        c.srcDurMs = dur > 0 ? dur : 5000;
+                        boolean isAudio = (mime != null && mime.startsWith("audio/"))
+                                || "yes".equals(r.extractMetadata(MediaMetadataRetriever.METADATA_KEY_HAS_AUDIO)) && r.extractMetadata(MediaMetadataRetriever.METADATA_KEY_HAS_VIDEO) == null;
+                        c.type = isAudio ? T_AUDIO : T_VIDEO;
+                        if (!isAudio) {
+                            try { c.thumb = r.getScaledFrameAtTime(0, MediaMetadataRetriever.OPTION_CLOSEST_SYNC, 160, 160); }
+                            catch (Throwable ignored) { }
+                        }
+                        c.trimStart = 0; c.trimEnd = c.srcDurMs;
+                    } finally {
+                        try { r.release(); } catch (Throwable ignored) { }
+                    }
                 }
-            } catch (Exception e) {
-                ui.post(() -> toast("Cannot read file: " + e.getMessage()));
+            } catch (Throwable e) {
+                ui.post(() -> toast("Cannot read file: " + e));
                 return;
             }
             if (c.type == T_AUDIO) c.track = TR_AUDIO;
@@ -1523,36 +1590,159 @@ public class MainActivity extends Activity {
 
     private void rebuildPreview() {
         if (exporting || !surfaceReady) return;
-        long pos = player != null ? player.getCurrentPosition() : 0;
-        boolean wasPlaying = player != null && player.isPlaying();
+        long pos = curPos();
+        boolean wasPlaying = false;
+        try { wasPlaying = player != null && player.isPlaying(); } catch (Throwable ignored) { }
         releasePlayer();
-        Composition comp;
+        boolean any = hasMain();
+        txtEmpty.setVisibility(any ? View.GONE : View.VISIBLE);
+        if (!any) return;
+        boolean ok = false;
+        if (!forceSimple) ok = startFullPreview();
+        if (!ok) ok = startSimplePreview();
+        if (!ok) return;
+        fitPreview();
         try {
-            comp = buildComposition(PREVIEW_SHORT_SIDE, false);
-        } catch (Exception e) {
-            toast("Preview error: " + e.getMessage());
-            return;
+            seekGlobal(Math.min(pos, Math.max(0, previewTotalMs() - 50)));
+            if (wasPlaying) player.play();
+        } catch (Throwable ignored) { }
+    }
+
+    /** Full preview: every layer, effect and text through CompositionPlayer. Falls back automatically. */
+    private boolean startFullPreview() {
+        final SharedPreferences sp = getSharedPreferences(PREFS, MODE_PRIVATE);
+        try {
+            Composition comp = buildComposition(PREVIEW_SHORT_SIDE, false);
+            if (comp == null) return false;
+            sp.edit().putBoolean("full_preview_pending", true).commit();
+            final CompositionPlayer cp = new CompositionPlayer.Builder(this).build();
+            player = cp;
+            simplePreview = false;
+            cp.setVideoSurfaceView(surface);
+            cp.addListener(new Player.Listener() {
+                @Override public void onPlayerError(PlaybackException error) {
+                    sp.edit().putBoolean("full_preview_pending", false).commit();
+                    if (player == cp) {
+                        forceSimple = true;       // this session only
+                        toast("Full preview not supported on this phone - using simple preview. Export still has all layers.");
+                        ui.post(() -> rebuildPreview());
+                    }
+                }
+                @Override public void onPlaybackStateChanged(int state) {
+                    if (state == Player.STATE_READY) sp.edit().putBoolean("full_preview_pending", false).commit();
+                }
+                @Override public void onIsPlayingChanged(boolean isPlaying) { btnPlay.setText(isPlaying ? "❚❚" : "▶"); }
+            });
+            cp.setComposition(comp);
+            cp.prepare();
+            return true;
+        } catch (Throwable t) {
+            sp.edit().putBoolean("full_preview_pending", false).commit();
+            releasePlayer();
+            forceSimple = true;                   // this session only
+            toast("Full preview unavailable (" + t.getClass().getSimpleName() + ") - using simple preview");
+            return false;
         }
-        txtEmpty.setVisibility(comp == null ? View.VISIBLE : View.GONE);
-        if (comp == null) return;
-        player = new CompositionPlayer.Builder(this).build();
-        player.setVideoSurfaceView(surface);
-        player.addListener(new Player.Listener() {
-            @Override public void onPlayerError(PlaybackException error) { toast("Preview: " + error.getMessage()); }
-            @Override public void onIsPlayingChanged(boolean isPlaying) { btnPlay.setText(isPlaying ? "❚❚" : "▶"); }
-        });
-        player.setComposition(comp);
-        player.prepare();
-        player.seekTo(Math.min(pos, Math.max(0, totalMs() - 50)));
-        if (wasPlaying) player.play();
+    }
+
+    /** Simple preview: main-track videos / photos only, through ExoPlayer. Very stable. */
+    private boolean startSimplePreview() {
+        try {
+            List<MediaItem> items = new ArrayList<>();
+            for (Clip c : clips) {
+                if (c.track != TR_MAIN) continue;
+                MediaItem.Builder mb = new MediaItem.Builder().setUri(c.uri);
+                if (c.type == T_IMAGE) {
+                    mb.setImageDurationMs(c.durMs);
+                } else if (c.trimStart > 0 || c.trimEnd < c.srcDurMs) {
+                    mb.setClippingConfiguration(new MediaItem.ClippingConfiguration.Builder()
+                            .setStartPositionMs(c.trimStart)
+                            .setEndPositionMs(c.trimEnd >= c.srcDurMs ? C.TIME_END_OF_SOURCE : c.trimEnd)
+                            .build());
+                }
+                items.add(mb.build());
+            }
+            if (items.isEmpty()) return false;
+            final ExoPlayer ep = new ExoPlayer.Builder(this).build();
+            player = ep;
+            simplePreview = true;
+            simpleAspect = 0f;
+            ep.setVideoSurfaceView(surface);
+            ep.addListener(new Player.Listener() {
+                @Override public void onPlayerError(PlaybackException error) { toast("Preview: " + error.getMessage()); }
+                @Override public void onIsPlayingChanged(boolean isPlaying) { btnPlay.setText(isPlaying ? "❚❚" : "▶"); }
+                @Override public void onVideoSizeChanged(VideoSize vs) {
+                    if (vs.width > 0 && vs.height > 0) {
+                        simpleAspect = vs.width * vs.pixelWidthHeightRatio / vs.height;
+                        fitPreview();
+                    }
+                }
+            });
+            ep.setMediaItems(items);
+            ep.prepare();
+            return true;
+        } catch (Throwable t) {
+            releasePlayer();
+            toast("Preview unavailable: " + t);
+            return false;
+        }
     }
 
     private void releasePlayer() {
         if (player != null) {
-            player.release();
+            Player p = player;
             player = null;
+            try { p.release(); } catch (Throwable ignored) { }
             btnPlay.setText("▶");
         }
+        simplePreview = false;
+        simpleAspect = 0f;
+    }
+
+    // ---- position helpers (simple preview plays one item at a time, so positions are mapped)
+    private long rawMs(Clip c) { return c.type == T_IMAGE ? c.durMs : Math.max(1, c.trimEnd - c.trimStart); }
+
+    private long previewTotalMs() {
+        if (!simplePreview || player == null) return totalMs();
+        long sum = 0;
+        for (Clip c : clips) if (c.track == TR_MAIN) sum += rawMs(c);
+        return Math.max(1, sum);
+    }
+
+    private long curPos() {
+        try {
+            if (player == null) return 0;
+            long cur = Math.max(0, player.getCurrentPosition());
+            if (!simplePreview) return cur;
+            int idx = player.getCurrentMediaItemIndex(), i = 0;
+            long acc = 0;
+            for (Clip c : clips) {
+                if (c.track != TR_MAIN) continue;
+                if (i >= idx) break;
+                acc += rawMs(c);
+                i++;
+            }
+            return acc + cur;
+        } catch (Throwable t) {
+            return 0;
+        }
+    }
+
+    private void seekGlobal(long ms) {
+        try {
+            if (player == null) return;
+            if (!simplePreview) { player.seekTo(Math.max(0, ms)); return; }
+            long acc = 0;
+            int i = 0, last = 0;
+            long lastLen = 0;
+            for (Clip c : clips) {
+                if (c.track != TR_MAIN) continue;
+                long e = rawMs(c);
+                if (ms < acc + e) { player.seekTo(i, Math.max(0, ms - acc)); return; }
+                acc += e; last = i; lastLen = e; i++;
+            }
+            player.seekTo(last, Math.max(0, lastLen - 1));
+        } catch (Throwable ignored) { }
     }
 
     // ================================================================== export
@@ -1642,7 +1832,13 @@ public class MainActivity extends Activity {
         progressExport.setVisibility(View.VISIBLE);
         progressExport.setProgress(0);
         txtExportStatus.setText(String.format(Locale.US, "Exporting %d×%d  ·  %.0f Mbps", cs[0], cs[1], mbps));
-        transformer.start(comp, out.getAbsolutePath());
+        try {
+            transformer.start(comp, out.getAbsolutePath());
+        } catch (Throwable t) {
+            finishExport();
+            txtExportStatus.setText("Export failed: " + t);
+            scheduleRefresh();
+        }
     }
 
     private void finishExport() {
