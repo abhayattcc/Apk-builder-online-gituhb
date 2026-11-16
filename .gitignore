@@ -3,6 +3,11 @@ build/
 local.properties
 .idea/
 *.iml
+.gradle/
+build/
+local.properties
+.idea/
+*.iml
 # Telegram session files (NEVER commit)
 *.session
 *.session-journal
