@@ -1,12 +1,14 @@
-name: Create and Build Video Editor APK
+name: Create Project and Build Video Editor APK
 
 on:
   workflow_dispatch:
+    inputs:
+      regenerate:
+        description: "Re-create project files even if they already exist (overwrites edits)"
+        type: boolean
+        default: false
   push:
     branches: [ main, master ]
-    paths:
-      - create-video-editor.sh
-      - .github/workflows/build-video-editor.yml
 
 permissions:
   contents: write
@@ -17,17 +19,51 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Create project folders and files from script
+      - name: Create project files in repo root
+        env:
+          REGEN: ${{ inputs.regenerate }}
         run: |
+          if [ -f app/build.gradle ] && [ "$REGEN" != "true" ]; then
+            echo "Project files already exist - skipping creation"
+            exit 0
+          fi
           test -f create-video-editor.sh || { echo "Upload create-video-editor.sh to the repo root"; exit 1; }
-          # Keep only the file-generation part (drop git/gh checks and the push/watch part)
+
+          # Keep only the file-generation part of the script (no git/gh, no push)
           sed -e '/^command -v git /d' \
               -e '/^command -v gh /d' \
               -e '/^gh auth status/d' \
               -e '/^git init -q -b main/,$d' \
               create-video-editor.sh > "$RUNNER_TEMP/generate.sh"
-          bash "$RUNNER_TEMP/generate.sh" video-editor-app
-          find video-editor-app -type f | sort
+
+          if [ -f .gitignore ]; then cp .gitignore "$RUNNER_TEMP/gitignore.old"; fi
+
+          # "." = generate straight into the repo root
+          bash "$RUNNER_TEMP/generate.sh" .
+
+          # The script makes its own build.yml; this workflow replaces it
+          rm -f .github/workflows/build.yml
+          if [ -f "$RUNNER_TEMP/gitignore.old" ]; then cat "$RUNNER_TEMP/gitignore.old" >> .gitignore; fi
+
+          find . -path ./.git -prune -o -type f -print | sort
+
+      - name: Fix Media3 1.5.1 import (VideoCompositorSettings moved to effect package)
+        run: |
+          find . -name MainActivity.java -path '*videoeditor*' -not -path './.git/*' \
+            -exec sed -i 's/import androidx\.media3\.common\.VideoCompositorSettings;/import androidx.media3.effect.VideoCompositorSettings;/' {} +
+          grep -rn "VideoCompositorSettings;" --include=MainActivity.java . || true
+
+      - name: Commit project files to the repo
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Nothing new to commit"
+          else
+            git commit -m "Add video editor project files"
+            git push
+          fi
 
       - uses: actions/setup-java@v4
         with:
@@ -37,37 +73,33 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: 8.9
-          build-root-directory: video-editor-app
 
       - name: Build debug APK
-        working-directory: video-editor-app
         run: |
           set -o pipefail
           gradle assembleDebug --no-daemon --console=plain 2>&1 | tee build.log
 
       - name: Show errors (only if build failed)
         if: failure()
-        working-directory: video-editor-app
         run: |
           {
             echo '## Build errors'
             echo '```'
-            grep -n -E "error:|warning: \[|What went wrong|Execution failed|Could not|FAILURE" -A4 build.log | head -80
+            grep -n -E "error:|What went wrong|Execution failed|Could not|FAILURE" -A4 build.log | head -80
             echo '```'
           } | tee -a "$GITHUB_STEP_SUMMARY"
 
       - name: Rename APK
-        working-directory: video-editor-app
         run: cp app/build/outputs/apk/debug/app-debug.apk VideoEditor.apk
 
       - uses: actions/upload-artifact@v4
         with:
           name: VideoEditor-apk
-          path: video-editor-app/VideoEditor.apk
+          path: VideoEditor.apk
 
       - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: build-${{ github.run_number }}
           name: Video Editor build ${{ github.run_number }}
-          files: video-editor-app/VideoEditor.apk
+          files: VideoEditor.apk
