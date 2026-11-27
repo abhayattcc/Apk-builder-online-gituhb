@@ -1,27 +1,30 @@
-# === ONE Colab cell (Runtime > Change runtime type > T4 GPU) =====================================================
-# PHASE 1  download ALL words of ALL chapters at the same time (full speed, many threads)
-# PHASE 2  verify EVERY downloaded picture with CLIP in one go (GPU batches)
-# PHASE 3  ONLY the unverified words are downloaded again (new Bing page, new search words) -> verified again
-#          -> repeated until every word is verified (or MAX_ROUNDS is reached; the best picture found is still kept)
-# PHASE 4  ONE best picture per word -> compressed WebP  english_odia_hindi.webp
-#          assets.zip (assets/<chapter>/*.webp + verify_report.csv) is created and downloaded at the very end.
+# === ONE cell (Colab: GPU not needed for this part, CPU is fine) ================================================
+# SEARCH   Google Images with the PNG filter (like "tiger animal type:png"); Bing (transparent filter) is the fallback
+# PHASE 1  download ALL words of ALL chapters at the same time (full speed)
+# PHASE 2  verify EVERY picture with CLIP (image-text AI) -> the 4 best pictures of each word are chosen
+# PHASE 3  ONLY words that are not verified are downloaded again (new search words) -> verified again, repeated
+# PHASE 4  the 4 best pictures of each word: BACKGROUND REMOVED (rembg) -> WHITE background -> cropped to the subject
+#          -> merged into ONE 2x2 picture -> compressed WebP  english_odia_hindi.webp
+#          at the end assets.zip (assets/<chapter>/*.webp + verify_report.csv) is created / downloaded.
 import subprocess, sys
-subprocess.run([sys.executable, "-m", "pip", "install", "-q", "transformers", "pillow"], check=False)
+subprocess.run([sys.executable, "-m", "pip", "install", "-q", "transformers", "pillow", "rembg", "onnxruntime"], check=False)
 
-import io, os, re, time, csv, uuid, random, shutil, zipfile, threading, urllib.parse, urllib.request
+import io, os, re, json, time, csv, uuid, random, shutil, zipfile, threading, urllib.parse, urllib.request
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from PIL import Image
 import torch
 from transformers import CLIPModel, CLIPProcessor
 
-CANDIDATES = 12          # new pictures downloaded per word and round; the single best one is kept
+CANDIDATES = 16          # new pictures per word and round; the best 4 are kept
 WORD_WORKERS = 48        # words downloaded at the same time (all chapters together)
 IMG_WORKERS = 160        # picture downloads at the same time
+SEARCH_PARALLEL = 6      # search-page requests at the same time (Google blocks too many at once)
 MAX_ROUNDS = 10          # retry rounds for unverified words
-NOIMG_EXTRA = 15         # extra rounds ONLY for words that still have no picture at all
-MAX_SIDE, QUALITY = 500, 70   # final WebP size / quality
+NOIMG_EXTRA = 15         # extra rounds ONLY for words that have no picture at all
+GRID, TILE, QUALITY = 4, 400, 70   # 4 pictures, 400 px tiles -> 800x800 merged WebP
 MIN_SIDE = 150           # smaller pictures are rejected
-TOP_RANK, MIN_PROB = 2, 0.20  # verified = word is in CLIP top-2 of its chapter OR probability >= 0.20
+REMBG_MODEL = "u2net"    # "u2net" = best quality, "u2netp" = 4x faster / smaller, "isnet-general-use" = sharper edges
+REMBG_WORKERS = 3        # background removals at the same time
 BATCH = 128              # CLIP batch size
 CACHE, OUT = "cache", "assets"
 PHOTO_CHAPTERS = ("fruit", "vegetable", "flower", "animal", "household", "transport", "profession", "computer", "body")
@@ -913,10 +916,41 @@ def http(url, timeout=12, maxb=6 * 1024 * 1024):
         if len(data) > maxb: raise ValueError("too big")
         return data, r.headers.get("Content-Type", "")
 
-def search_urls(q, folder, first=1):
-    flt = "&qft=" + urllib.parse.quote("+filterui:photo-photo") if any(k in folder.lower() for k in PHOTO_CHAPTERS) else ""
-    page, _ = http("https://www.bing.com/images/search?adlt=strict&form=HDRSC3&first=" + str(first) + "&count=50&cvid=" + uuid.uuid4().hex.upper()
-                   + flt + "&q=" + urllib.parse.quote(q))          # a NEW Bing page for every search
+# ---------------- search: Google Images (PNG filter) first, Bing (transparent filter) as fallback ----------------
+SEARCH_SEM = threading.Semaphore(SEARCH_PARALLEL)
+G_FAIL = [0]                                   # consecutive Google failures; after 8 Google is skipped (blocked)
+BAD_HOSTS = ("gstatic.com", "google.com", "googleusercontent.com", "ggpht.com", "youtube.com")
+
+def google_urls(q, png):
+    if G_FAIL[0] >= 8: return []
+    params = {"q": q, "udm": "2", "hl": "en", "safe": "active"}     # udm=2 = Images tab, same as the screenshot
+    if png: params["tbs"] = "ift:png"                               # = the "type:png" filter
+    try:
+        with SEARCH_SEM:
+            time.sleep(random.random() * 0.8)
+            page, _ = http("https://www.google.com/search?" + urllib.parse.urlencode(params), timeout=15, maxb=4 * 1024 * 1024)
+    except Exception:
+        G_FAIL[0] += 1; return []
+    page = page.decode("utf-8", "ignore"); out = []
+    if "unusual traffic" in page or "/sorry/" in page:
+        G_FAIL[0] += 1; return []
+    for m in re.finditer(r'\["(https?:[^"\s]+?)",\s*(\d{2,5}),\s*(\d{2,5})\]', page):
+        try: u = json.loads('"' + m.group(1) + '"')
+        except Exception: u = m.group(1).replace("\\/", "/").replace("\\u003d", "=").replace("\\u0026", "&")
+        if any(h in u for h in BAD_HOSTS): continue                # thumbnails / google pages
+        if min(int(m.group(2)), int(m.group(3))) < MIN_SIDE: continue
+        if u not in out: out.append(u)
+        if len(out) >= CANDIDATES + 10: break
+    G_FAIL[0] = 0 if out else G_FAIL[0] + 1
+    return out
+
+def bing_urls(q, folder, png, first=1):
+    if png: flt = "&qft=" + urllib.parse.quote("+filterui:photo-transparent")
+    elif any(k in folder.lower() for k in PHOTO_CHAPTERS): flt = "&qft=" + urllib.parse.quote("+filterui:photo-photo")
+    else: flt = ""
+    with SEARCH_SEM:
+        page, _ = http("https://www.bing.com/images/search?adlt=strict&form=HDRSC3&first=" + str(first) + "&count=50&cvid="
+                       + uuid.uuid4().hex.upper() + flt + "&q=" + urllib.parse.quote(q))
     page = page.decode("utf-8", "ignore"); out = []
     for m in re.finditer(r'murl(?:&quot;|")\s*:\s*(?:&quot;|")(https?:[^"<>\s]+?)(?:&quot;|")', page):
         u = (m.group(1).replace("&amp;", "&").replace("\\u0026", "&").replace("\\u003d", "=")
@@ -925,16 +959,32 @@ def search_urls(q, folder, first=1):
         if len(out) >= CANDIDATES + 10: break
     return out
 
+def search_urls(q, folder, png, first=1):
+    urls = google_urls(q, png)
+    if len(urls) < 8:                                           # Google blocked / too few -> add Bing results
+        for u in bing_urls(q, folder, png, first):
+            if u not in urls: urls.append(u)
+    return urls
+
+# ---------------- pictures ----------------
+def flat(im):
+    """RGBA -> RGB on white (used for the checker and the duplicate test)"""
+    if im.mode == "RGBA":
+        bg = Image.new("RGB", im.size, (255, 255, 255)); bg.paste(im, mask=im.split()[-1]); return bg
+    return im.convert("RGB")
+
 def fetch_picture(url):
-    """one candidate -> PIL image (RGB, max 600 px) or None"""
+    """one candidate -> PIL image (RGB, or RGBA if it has a real transparent background, max 600 px) or None"""
     try:
         data, ctype = http(url)
         if ctype and not ctype.lower().startswith("image/"): return None
         im = Image.open(io.BytesIO(data)); im.load()
         if min(im.size) < MIN_SIDE: return None
         if max(im.size) / float(min(im.size)) > 3: return None          # banners / strips
-        if im.mode in ("RGBA", "LA", "P"):
-            im = im.convert("RGBA"); bg = Image.new("RGB", im.size, (255, 255, 255)); bg.paste(im, mask=im.split()[-1]); im = bg
+        has_alpha = im.mode in ("RGBA", "LA") or (im.mode == "P" and "transparency" in im.info)
+        if has_alpha:
+            im = im.convert("RGBA")
+            if im.split()[-1].getextrema()[0] > 250: im = im.convert("RGB")   # alpha channel exists but is fully opaque
         else:
             im = im.convert("RGB")
         im.thumbnail((600, 600))
@@ -943,44 +993,47 @@ def fetch_picture(url):
         return None
 
 def ahash(im):
-    g = im.convert("L").resize((8, 8)); px = list(g.tobytes()); avg = sum(px) / 64.0
+    g = flat(im).convert("L").resize((8, 8)); px = list(g.tobytes()); avg = sum(px) / 64.0
     return sum(1 << i for i, v in enumerate(px) if v > avg)
 
 def same(a, b):
     return bin(a ^ b).count("1") <= 4
 
-VAR = ["{q}", "{q} photo", "{en} isolated white background", "{q} close up", "{en}", "{q} hd", "single {q}", "{q} high quality"]
+# (search words, png filter on/off): the first ones copy the screenshot search "<word> type:png"
+VAR = [("{q}", True), ("{q} png transparent background", True), ("{en}", True), ("{q} isolated white background", False),
+       ("{q} hd", True), ("{q}", False), ("single {q} cutout", True), ("{q} close up", False)]
 def variants(w, rnd):
-    return VAR[rnd % len(VAR)].format(q=w.q, en=w.en)
+    t, png = VAR[rnd % len(VAR)]
+    return t.format(q=w.q, en=w.en), png
 
 # ---------------- word state ----------------
 class W:
     def __init__(s, i, item, ci):
-        s.i, s.ci = i, ci                                   # global index, index inside its chapter
+        s.i, s.ci = i, ci
         s.chapter, s.en, s.od, s.hi, s.q = item
-        s.dir = os.path.join(CACHE, str(i)); os.makedirs(s.dir, exist_ok=True)
-        s.seen, s.hashes, s.new, s.count = set(), [], [], 0
-        s.best, s.best_p, s.best_rank, s.verified, s.err, s.rounds = None, 0.0, 99, False, "", 0
+        s.dir = os.path.join(CACHE, str(i))
+        s.seen, s.hash, s.new, s.cands, s.count = set(), {}, [], [], 0     # cands: (probability, rank, path)
+        s.picked, s.n_good, s.conf, s.verified, s.err, s.rounds = [], 0, 0.0, False, "", 0
 
+shutil.rmtree(CACHE, ignore_errors=True); os.makedirs(CACHE, exist_ok=True)
 chapters = {}
 for it in WORDS: chapters.setdefault(it[0], []).append(it)
 words = []
 for ch in sorted(chapters):
     for ci, it in enumerate(chapters[ch]): words.append(W(len(words), it, ci))
-print("Words: %d in %d chapters" % (len(words), len(chapters)))
-
-shutil.rmtree(CACHE, ignore_errors=True); os.makedirs(CACHE, exist_ok=True)
 for w in words: os.makedirs(w.dir, exist_ok=True)
+print("Words: %d in %d chapters" % (len(words), len(chapters)))
 
 img_pool = ThreadPoolExecutor(IMG_WORKERS)
 
 def download_word(w, rnd):
-    """one download round of ONE word; candidate pictures are written to disk (cache/<id>/<n>.jpg)"""
+    """one download round of ONE word; candidates are written to disk (PNG if transparent, else JPEG)"""
     w.rounds = rnd + 1
+    q, png = variants(w, rnd)
     urls, err = [], ""
-    for attempt in range(3):                                    # a NEW Bing page for every try
+    for attempt in range(3):
         try:
-            urls = search_urls(variants(w, rnd), w.chapter, first=1 + 35 * (rnd % 3))
+            urls = search_urls(q, w.chapter, png, first=1 + 35 * (rnd % 3))
             if urls: break
             err = "no results"
         except Exception as e:
@@ -988,23 +1041,23 @@ def download_word(w, rnd):
         time.sleep(1.5 * (attempt + 1) + random.random())
     urls = [u for u in urls if u not in w.seen]
     if not urls:
-        w.err = "search: " + err
-        return
+        w.err = "search: " + err; return
     w.seen.update(urls)
     got = 0
     for im in img_pool.map(fetch_picture, urls[:CANDIDATES + 10]):
         if im is None: continue
         h = ahash(im)
-        if any(same(h, o) for o in w.hashes): continue          # no duplicates
-        w.hashes.append(h)
-        path = os.path.join(w.dir, "%d.jpg" % w.count); w.count += 1
-        im.save(path, "JPEG", quality=88)
-        w.new.append(path); got += 1
+        if any(same(h, o) for o in w.hash.values()): continue          # no duplicates
+        if im.mode == "RGBA":
+            path = os.path.join(w.dir, "%d.png" % w.count); im.save(path, "PNG")
+        else:
+            path = os.path.join(w.dir, "%d.jpg" % w.count); im.save(path, "JPEG", quality=88)
+        w.count += 1; w.hash[path] = h; w.new.append(path); got += 1
         if got >= CANDIDATES: break
-    w.err = "" if (got or w.best) else "no usable picture"
+    w.err = "" if (got or w.cands) else "no usable picture"
 
 def download_round(ws, rnd, label):
-    done = 0; t = time.time()
+    done, t = 0, time.time()
     with ThreadPoolExecutor(WORD_WORKERS) as wp:
         futs = [wp.submit(download_word, w, rnd) for w in ws]
         for f in as_completed(futs):
@@ -1012,7 +1065,8 @@ def download_round(ws, rnd, label):
             except Exception as e: print("   error:", e)
             done += 1
             if done % 100 == 0 or done == len(ws):
-                print("   %s: %d/%d words downloaded  [%.0f s]" % (label, done, len(ws), time.time() - t))
+                print("   %s: %d/%d words downloaded  [%.0f s]  (google %s)" % (label, done, len(ws), time.time() - t,
+                      "blocked -> using Bing" if G_FAIL[0] >= 8 else "ok"))
 
 # ---------------- the checker (CLIP) ----------------
 dev = "cuda" if torch.cuda.is_available() else "cpu"
@@ -1039,12 +1093,23 @@ TXT = {ch: text_feats(["a photo of " + it[4] for it in items]) for ch, items in 
 
 def load_rgb(path):
     try:
-        im = Image.open(path); im.load(); return im.convert("RGB")
+        im = Image.open(path); im.load(); return flat(im.convert("RGBA") if im.mode in ("RGBA", "LA", "P") else im)
     except Exception:
         return None
 
+def choose(w):
+    """4 best pictures of the word. GOOD = word is in the checker's top 3 of its chapter, or probability >= 0.15"""
+    order = sorted(w.cands, key=lambda c: -c[0])
+    good = [c for c in order if c[1] < 3 or c[0] >= 0.15]
+    rest = [c for c in order if c not in good]
+    pick = (good + rest)[:GRID]
+    w.picked = [c[2] for c in pick]
+    w.n_good = len([c for c in pick if c in good])
+    w.conf = sum(c[0] for c in pick) / max(1, len(pick))
+    w.verified = w.n_good >= 3
+
 def verify(ws, label):
-    """verify ALL new pictures of ALL given words at once (batched on the GPU); keep the single best picture per word"""
+    """verify ALL new pictures of ALL given words at once (GPU/CPU batches)"""
     pairs = [(w, p) for w in ws for p in w.new]
     by_ch = {}
     for w, p in pairs: by_ch.setdefault(w.chapter, []).append((w, p))
@@ -1054,20 +1119,19 @@ def verify(ws, label):
             chunk = lst[s:s + BATCH]
             imgs = list(img_pool.map(load_rgb, [p for _, p in chunk]))
             ok = [(w, p, im) for (w, p), im in zip(chunk, imgs) if im is not None]
+            done += len(chunk)
             if not ok: continue
             with torch.no_grad():
                 probs = (100.0 * image_feats([im for _, _, im in ok]) @ TXT[ch].T).softmax(dim=-1).cpu()
             for row, (w, p, _) in enumerate(ok):
                 pr = probs[row]; v = float(pr[w.ci]); rank = int((pr > pr[w.ci]).sum())
-                if v > w.best_p or w.best is None:
-                    w.best, w.best_p, w.best_rank = p, v, rank
-            done += len(chunk)
+                w.cands.append((v, rank, p))
         print("   %s: verified %d/%d pictures  [%.0f s]" % (label, done, len(pairs), time.time() - t))
     for w in ws:
         w.new = []
-        w.verified = w.best is not None and (w.best_rank < TOP_RANK or w.best_p >= MIN_PROB)
+        if w.cands: choose(w)
 
-# ================================ RUN ================================
+# ================================ RUN: search + download + verify + retry ================================
 t0 = time.time()
 print("\n=== PHASE 1: downloading ALL %d words of ALL chapters at once ..." % len(words))
 download_round(words, 0, "download")
@@ -1079,7 +1143,7 @@ while True:
     pending = [w for w in words if not w.verified]
     print("\n=== verified %d/%d words" % (len(words) - len(pending), len(words)))
     if rnd >= MAX_ROUNDS:                                       # after MAX_ROUNDS only words WITHOUT any picture go on
-        pending = [w for w in pending if w.best is None]
+        pending = [w for w in pending if not w.cands]
     if not pending or rnd >= MAX_ROUNDS + NOIMG_EXTRA: break
     rnd += 1
     names = ", ".join(w.en for w in pending[:8]) + (" ..." if len(pending) > 8 else "")
@@ -1087,24 +1151,84 @@ while True:
     download_round(pending, rnd, "retry %d" % rnd)
     verify(pending, "retry %d" % rnd)
 
-# ---------------- save: ONE best picture per word ----------------
-print("\n=== PHASE 4: saving the best picture of every word ...")
+# ================================ PHASE 4: remove background -> white background -> merge 4 ================================
+print("\n=== PHASE 4: removing backgrounds, white background, merging 4 pictures per word ...")
+from rembg import remove, new_session
+SESSION = new_session(REMBG_MODEL)                              # model is downloaded once (~170 MB for u2net)
+
+def to_tile(im_rgba_or_rgb, use_alpha):
+    """crop to the subject, fit into a TILE x TILE white square"""
+    if use_alpha:
+        a = im_rgba_or_rgb.split()[-1]
+        bbox = a.point(lambda v: 255 if v > 20 else 0).getbbox()
+        if bbox is None: return None
+        w0, h0 = im_rgba_or_rgb.size
+        if (bbox[2] - bbox[0]) * (bbox[3] - bbox[1]) < 0.03 * w0 * h0: return None   # nothing / noise left -> use original
+        im = im_rgba_or_rgb.crop(bbox)
+    else:
+        im = im_rgba_or_rgb
+    scale = (TILE * (0.92 if use_alpha else 1.0)) / float(max(im.size))
+    im = im.resize((max(1, int(im.width * scale)), max(1, int(im.height * scale))), Image.LANCZOS)
+    tile = Image.new("RGB", (TILE, TILE), (255, 255, 255))
+    pos = ((TILE - im.width) // 2, (TILE - im.height) // 2)
+    if use_alpha: tile.paste(im, pos, mask=im.split()[-1])
+    else: tile.paste(im.convert("RGB"), pos)
+    return tile
+
+def cutout(path):
+    """one picture -> TILE x TILE picture: background removed, on white. Already-transparent PNGs skip the AI."""
+    try:
+        im = Image.open(path); im.load()
+        if im.mode in ("RGBA", "LA", "P"):
+            im = im.convert("RGBA")
+            a = im.split()[-1]; hist = a.histogram()
+            if sum(hist[:250]) > 0.05 * im.width * im.height:    # real transparent background -> no AI needed
+                t = to_tile(im, True)
+                if t is not None: return t
+            im = flat(im)
+        else:
+            im = im.convert("RGB")
+        cut = remove(im, session=SESSION)                        # RGBA, background transparent
+        t = to_tile(cut.convert("RGBA"), True)
+        return t if t is not None else to_tile(im, False)        # fallback: the original picture on white
+    except Exception:
+        return None
+
+def merge4(tiles):
+    sheet = Image.new("RGB", (TILE * 2, TILE * 2), (255, 255, 255))
+    for i, t in enumerate(tiles[:4]):
+        sheet.paste(t, ((i % 2) * TILE, (i // 2) * TILE))
+    buf = io.BytesIO(); sheet.save(buf, "WEBP", quality=QUALITY, method=6)
+    return buf.getvalue()
+
+def build_word(w):
+    if not w.picked: return
+    tiles = [t for t in (cutout(p) for p in w.picked) if t is not None]
+    if not tiles: w.err = "background removal failed"; return
+    name = re.sub(r'[\\/:*?"<>|]', "", "%s_%s_%s" % (w.en, w.od, w.hi)).strip()
+    d = os.path.join(OUT, w.chapter); os.makedirs(d, exist_ok=True)
+    open(os.path.join(d, name + ".webp"), "wb").write(merge4(tiles))
+
+done = 0
+with ThreadPoolExecutor(REMBG_WORKERS) as rp:
+    futs = [rp.submit(build_word, w) for w in words]
+    for f in as_completed(futs):
+        try: f.result()
+        except Exception as e: print("   error:", e)
+        done += 1
+        if done % 25 == 0 or done == len(words):
+            print("   merged %d/%d words  [%.0f s total]" % (done, len(words), time.time() - t0))
+
+# ---------------- report + zip ----------------
 report = []
 for w in words:
-    status = "FAILED"
-    if w.best:
-        name = re.sub(r'[\\/:*?"<>|]', "", "%s_%s_%s" % (w.en, w.od, w.hi)).strip()
-        d = os.path.join(OUT, w.chapter); os.makedirs(d, exist_ok=True)
-        im = Image.open(w.best).convert("RGB"); im.thumbnail((MAX_SIDE, MAX_SIDE))
-        im.save(os.path.join(d, name + ".webp"), "WEBP", quality=QUALITY, method=6)
-        status = "OK" if w.verified else ("CHECK" if w.best_p >= 0.05 else "LOW")
-    report.append([w.chapter, w.en, w.od, w.hi, status, round(w.best_p, 3), w.best_rank + 1 if w.best else "", w.rounds, w.err])
-
+    status = "FAILED" if not w.picked else ("OK" if w.n_good >= 3 else ("CHECK" if w.n_good >= 1 else "LOW"))
+    report.append([w.chapter, w.en, w.od, w.hi, status, w.n_good, round(w.conf, 3), w.rounds, w.err])
 with open("verify_report.csv", "w", newline="", encoding="utf-8-sig") as f:
-    csv.writer(f).writerows([["chapter", "english", "odia", "hindi", "status", "confidence", "clip_rank", "rounds", "error"]] + report)
+    csv.writer(f).writerows([["chapter", "english", "odia", "hindi", "status", "good_pictures", "confidence", "rounds", "error"]] + report)
 bad = [r for r in report if r[4] in ("LOW", "FAILED")]
 chk = [r for r in report if r[4] == "CHECK"]
-print("Finished in %.0f min: %d OK, %d CHECK, %d LOW/FAILED" % ((time.time() - t0) / 60, len(report) - len(bad) - len(chk), len(chk), len(bad)))
+print("\nFinished in %.0f min: %d OK, %d CHECK, %d LOW/FAILED" % ((time.time() - t0) / 60, len(report) - len(bad) - len(chk), len(chk), len(bad)))
 for r in bad: print("  LOW/FAILED:", r[0], r[1], r[4], r[8])
 
 with zipfile.ZipFile("assets.zip", "w", zipfile.ZIP_DEFLATED) as z:
